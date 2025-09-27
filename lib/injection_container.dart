@@ -1,7 +1,10 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter/foundation.dart';
+import 'dart:io';
 
 // Domain
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -60,6 +63,16 @@ Future<void> init() async {
   dio.options.baseUrl = dotenv.env['BASE_URL'] ?? 'http://192.168.50.48:8000/api';
   dio.options.connectTimeout = const Duration(seconds: 30);
   dio.options.receiveTimeout = const Duration(seconds: 30);
+  dio.options.sendTimeout = const Duration(seconds: 30);
+  
+  // Add SSL certificate handling for development
+  if (kDebugMode) {
+    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+      final client = HttpClient();
+      client.badCertificateCallback = (cert, host, port) => true;
+      return client;
+    };
+  }
   
   // Add logging interceptor
   dio.interceptors.add(LogInterceptor(
