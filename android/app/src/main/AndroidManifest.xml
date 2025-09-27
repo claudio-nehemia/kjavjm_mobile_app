@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="kjavjm_mobile_app"
+        android:label="Absensi KJAVJM"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
