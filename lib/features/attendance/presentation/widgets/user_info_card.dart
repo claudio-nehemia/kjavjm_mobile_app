@@ -4,9 +4,12 @@ import '../../../../shared/constants/app_constants.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import 'package:intl/intl.dart';
+import '../../../../core/widgets/user_avatar.dart';
 
 class UserInfoCard extends StatelessWidget {
-  const UserInfoCard({super.key});
+  final String? photoUrl;
+  final String username;
+  const UserInfoCard({super.key, this.photoUrl, required this.username});
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +33,7 @@ class UserInfoCard extends StatelessWidget {
               style: AppTextStyles.body2,
             ),
             const SizedBox(height: AppSizes.paddingMedium),
-            
+
             // User Info Section
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, state) {
@@ -43,18 +46,11 @@ class UserInfoCard extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(25),
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 30,
-                          ),
+                        UserAvatar(
+                          photoUrl: state.user.photoUrl,
+                          userName: state.user.name,
+                          size: 60,
+                          showBorder: true,
                         ),
                         const SizedBox(width: AppSizes.paddingMedium),
                         Expanded(
@@ -100,9 +96,9 @@ class UserInfoCard extends StatelessWidget {
                 return const SizedBox.shrink();
               },
             ),
-            
+
             const SizedBox(height: AppSizes.paddingMedium),
-            
+
             // Date Info
             Container(
               padding: const EdgeInsets.symmetric(
@@ -115,13 +111,13 @@ class UserInfoCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Text(
-                    'Tanggal',
-                    style: AppTextStyles.body1,
-                  ),
+                  const Text('Tanggal', style: AppTextStyles.body1),
                   const Spacer(),
                   Text(
-                    DateFormat('EEEE, dd MMMM yyyy', 'id_ID').format(DateTime.now()),
+                    DateFormat(
+                      'EEEE, dd MMMM yyyy',
+                      'id_ID',
+                    ).format(DateTime.now()),
                     style: AppTextStyles.body1.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
@@ -129,9 +125,9 @@ class UserInfoCard extends StatelessWidget {
                 ],
               ),
             ),
-            
+
             const SizedBox(height: AppSizes.paddingSmall),
-            
+
             // Time Info
             Container(
               padding: const EdgeInsets.symmetric(
@@ -144,10 +140,7 @@ class UserInfoCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Text(
-                    'Waktu',
-                    style: AppTextStyles.body1,
-                  ),
+                  const Text('Waktu', style: AppTextStyles.body1),
                   const Spacer(),
                   StreamBuilder(
                     stream: Stream.periodic(const Duration(seconds: 1)),

@@ -8,6 +8,7 @@ class Profile {
   final String? postalCode;
   final String status;
   final String? profilePicture;
+  final String? photoUrl;
   final Role? role;
   final Department? department;
   final String createdAt;
@@ -23,6 +24,7 @@ class Profile {
     this.postalCode,
     required this.status,
     this.profilePicture,
+    this.photoUrl,
     this.role,
     this.department,
     required this.createdAt,
@@ -43,6 +45,7 @@ class Profile {
           postalCode == other.postalCode &&
           status == other.status &&
           profilePicture == other.profilePicture &&
+          photoUrl == other.photoUrl &&
           role == other.role &&
           department == other.department &&
           createdAt == other.createdAt &&
@@ -59,6 +62,7 @@ class Profile {
       postalCode.hashCode ^
       status.hashCode ^
       profilePicture.hashCode ^
+      photoUrl.hashCode ^
       role.hashCode ^
       department.hashCode ^
       createdAt.hashCode ^
@@ -66,7 +70,7 @@ class Profile {
 
   @override
   String toString() {
-    return 'Profile{id: $id, name: $name, email: $email, phone: $phone, address: $address, city: $city, postalCode: $postalCode, status: $status, profilePicture: $profilePicture, role: $role, department: $department, createdAt: $createdAt, updatedAt: $updatedAt}';
+    return 'Profile{id: $id, name: $name, email: $email, phone: $phone, address: $address, city: $city, postalCode: $postalCode, status: $status, profilePicture: $profilePicture, photoUrl: $photoUrl, role: $role, department: $department, createdAt: $createdAt, updatedAt: $updatedAt}';
   }
 }
 

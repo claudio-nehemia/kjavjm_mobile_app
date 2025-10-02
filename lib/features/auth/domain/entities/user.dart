@@ -11,6 +11,7 @@ class User extends Equatable {
   final String? postalCode;
   final String? status;
   final String? profilePicture;
+  final String? photoUrl;
   final Role? role;
   final Department? department;
 
@@ -25,6 +26,7 @@ class User extends Equatable {
     this.postalCode,
     this.status,
     this.profilePicture,
+    this.photoUrl,
     this.role,
     this.department,
   });
@@ -32,7 +34,7 @@ class User extends Equatable {
   @override
   List<Object?> get props => [
     id, name, email, token, phone, address, city, 
-    postalCode, status, profilePicture, role, department
+    postalCode, status, profilePicture, photoUrl, role, department
   ];
 
   Map<String, dynamic> toJson() {

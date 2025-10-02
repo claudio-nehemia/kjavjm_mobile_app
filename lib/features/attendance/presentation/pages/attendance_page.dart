@@ -82,7 +82,10 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // User Info Card
-                    const UserInfoCard(),
+                    UserInfoCard(
+                      photoUrl: state is AttendanceLoaded ? state.photoUrl : null,
+                      username: state is AttendanceLoaded ? state.username : 'User',
+                    ),
                     const SizedBox(height: AppSizes.paddingLarge),
                     
                     // Status dan Action Cards

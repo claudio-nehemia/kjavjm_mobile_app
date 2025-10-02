@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:file_picker/file_picker.dart';
 
 class ProfileService {
   final Dio _dio;
@@ -23,6 +24,22 @@ class ProfileService {
       return response.data;
     } catch (e) {
       throw Exception('Failed to update profile: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> updatePhoto(PlatformFile file) async {
+    try {
+      final formData = FormData.fromMap({
+        'photo': await MultipartFile.fromFile(
+          file.path!,
+          filename: file.name,
+        ),
+      });
+
+      final response = await _dio.post('/profile/update-photo', data: formData);
+      return response.data;
+    } catch (e) {
+      throw Exception('Failed to update photo: $e');
     }
   }
 

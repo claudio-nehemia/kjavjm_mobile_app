@@ -6,6 +6,7 @@ class AttendanceModel extends Attendance {
     required super.userId,
     required super.tanggal,
     required super.status,
+    super.photoUrl,
     super.checkIn,
     super.checkOut,
     super.documentation,
@@ -18,6 +19,7 @@ class AttendanceModel extends Attendance {
       tanggal: json['tanggal'] ?? '',
       status: json['status'] ?? '',
       checkIn: json['check_in'],
+      photoUrl: json['photo_url'],
       checkOut: json['check_out'],
       documentation: json['documentation'],
     );

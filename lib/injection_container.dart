@@ -188,6 +188,7 @@ Future<void> init() async {
       checkOut: sl(),
       checkOutWithOvertime: sl(),
       getRecentAttendance: sl(),
+      sharedPreferences: sl(),
     ),
   );
 

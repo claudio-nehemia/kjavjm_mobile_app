@@ -120,6 +120,7 @@ class DashboardView extends StatelessWidget {
                             username: state.dashboardData.username,
                             department: state.dashboardData.department,
                             profilePicture: state.dashboardData.profilePicture,
+                            photoUrl: state.dashboardData.photoUrl,
                           ),
                           const SizedBox(height: 24),
                           QuickMenuWidget(),

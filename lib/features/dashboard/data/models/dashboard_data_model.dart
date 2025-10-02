@@ -26,6 +26,7 @@ class DashboardDataModel extends DashboardData {
     required super.username,
     required super.department,
     super.profilePicture,
+    super.photoUrl,
     required super.monthlySummary,
     required super.weeklySummary,
     required super.attendanceLog,
@@ -38,6 +39,7 @@ class DashboardDataModel extends DashboardData {
       username: json['username'] ?? '',
       department: json['department'] ?? '',
       profilePicture: json['profile_picture'],
+      photoUrl: json['photo_url'],
       monthlySummary: AttendanceSummaryModel.fromJson(
         attendanceSummary?['monthly'] ?? {}
       ),

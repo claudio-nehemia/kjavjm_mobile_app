@@ -42,7 +42,26 @@ class HistoryView extends StatelessWidget {
           ),
         ],
       ),
-      body: BlocBuilder<HistoryBloc, HistoryState>(
+      body: BlocConsumer<HistoryBloc, HistoryState>(
+        listener: (context, state) {
+          if (state is HistoryError) {
+            // Show snackbar for errors but don't block the UI completely
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.message),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+                action: SnackBarAction(
+                  label: 'Coba Lagi',
+                  textColor: Colors.white,
+                  onPressed: () {
+                    context.read<HistoryBloc>().add(const RefreshHistoryData());
+                  },
+                ),
+              ),
+            );
+          }
+        },
         builder: (context, state) {
           if (state is HistoryLoading) {
             return const Center(

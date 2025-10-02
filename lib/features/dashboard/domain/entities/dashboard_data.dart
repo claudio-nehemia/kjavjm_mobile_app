@@ -24,6 +24,7 @@ class DashboardData extends Equatable {
   final String username;
   final String department;
   final String? profilePicture;
+  final String? photoUrl;
   final AttendanceSummary monthlySummary;
   final AttendanceSummary weeklySummary;
   final List<AttendanceLog> attendanceLog;
@@ -32,11 +33,12 @@ class DashboardData extends Equatable {
     required this.username,
     required this.department,
     this.profilePicture,
+    this.photoUrl,
     required this.monthlySummary,
     required this.weeklySummary,
     required this.attendanceLog,
   });
 
   @override
-  List<Object?> get props => [username, department, profilePicture, monthlySummary, weeklySummary, attendanceLog];
+  List<Object?> get props => [username, department, profilePicture, photoUrl, monthlySummary, weeklySummary, attendanceLog];
 }

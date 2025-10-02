@@ -32,6 +32,7 @@ dependencies:
   # UI Components
   flutter_form_builder: ^10.1.0
   form_builder_validators: ^11.2.0
+  cached_network_image: ^3.3.1
   
   # Functional Programming
   dartz: ^0.10.1

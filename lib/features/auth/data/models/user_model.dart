@@ -12,6 +12,7 @@ class UserModel extends User {
     super.postalCode,
     super.status,
     super.profilePicture,
+    super.photoUrl,
     super.role,
     super.department,
   });
@@ -31,6 +32,7 @@ class UserModel extends User {
         postalCode: userJson['postal_code'] as String?,
         status: userJson['status'] as String?,
         profilePicture: userJson['profile_picture'] as String?,
+        photoUrl: userJson['photo_url'] as String?,
         role: userJson['role'] != null 
             ? Role(
                 id: userJson['role']['id'] as int,
@@ -58,6 +60,7 @@ class UserModel extends User {
       postalCode: json['postal_code'] as String?,
       status: json['status'] as String?,
       profilePicture: json['profile_picture'] as String?,
+      photoUrl: json['photo_url'] as String?,
       role: json['role'] != null 
           ? Role(
               id: json['role']['id'] as int,
@@ -85,6 +88,7 @@ class UserModel extends User {
       'postal_code': postalCode,
       'status': status,
       'profile_picture': profilePicture,
+      'photo_url': photoUrl,
       'role': role != null ? {'id': role!.id, 'name': role!.name} : null,
       'departement': department != null ? {'id': department!.id, 'name': department!.name} : null,
     };
@@ -102,6 +106,7 @@ class UserModel extends User {
       postalCode: postalCode,
       status: status,
       profilePicture: profilePicture,
+      photoUrl: photoUrl,
       role: role,
       department: department,
     );

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../domain/usecases/get_today_attendance.dart';
 import '../../domain/usecases/check_in.dart';
@@ -16,6 +17,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   final CheckOut checkOut;
   final CheckOutWithOvertime checkOutWithOvertime;
   final GetRecentAttendance getRecentAttendance;
+  final SharedPreferences sharedPreferences;
 
   AttendanceBloc({
     required this.getTodayAttendance,
@@ -24,6 +26,7 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     required this.checkOut,
     required this.checkOutWithOvertime,
     required this.getRecentAttendance,
+    required this.sharedPreferences,
   }) : super(AttendanceInitial()) {
     on<GetTodayAttendanceEvent>(_onGetTodayAttendance);
     on<CheckInEvent>(_onCheckIn);
@@ -39,12 +42,33 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
   ) async {
     emit(AttendanceLoading());
     
+    // Get user info from shared preferences
+    final userJson = sharedPreferences.getString('USER_DATA');
+    String? photoUrl;
+    String username = 'User';
+    
+    if (userJson != null) {
+      try {
+        final userData = Map<String, dynamic>.from(
+          (sharedPreferences.get('USER_DATA') as Map?) ?? {}
+        );
+        photoUrl = userData['photo_url'] as String?;
+        username = userData['name'] as String? ?? 'User';
+      } catch (e) {
+        print('Error parsing user data: $e');
+      }
+    }
+    
     final result = await getTodayAttendance(NoParams());
     
     result.fold(
       (failure) => emit(AttendanceError(message: failure.message)),
       (todayAttendance) {
-        emit(AttendanceLoaded(todayAttendance: todayAttendance));
+        emit(AttendanceLoaded(
+          todayAttendance: todayAttendance,
+          photoUrl: photoUrl,
+          username: username,
+        ));
         // Also get recent attendance
         add(GetRecentAttendanceEvent());
       },

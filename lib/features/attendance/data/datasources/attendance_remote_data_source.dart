@@ -304,7 +304,7 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
         throw ServerException(message: 'Failed to get attendance history');
       }
     } catch (e) {
-      throw ServerException(message: 'Network error: $e');
+      throw ServerException(message: 'Eror nih bang: $e');
     }
   }
 

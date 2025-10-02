@@ -243,28 +243,114 @@ class HistoryBloc extends Bloc<HistoryEvent, HistoryState> {
     RefreshHistoryData event,
     Emitter<HistoryState> emit,
   ) async {
-    if (state is HistoryLoaded) {
-      final currentState = state as HistoryLoaded;
-      
-      // Refresh statistics
-      add(LoadAttendanceStatistics(year: currentState.currentYear));
-      add(LoadMonthlyStatistics(year: currentState.currentYear));
-      
-      // Refresh detailed history
-      add(LoadDetailedHistory(
-        limit: currentState.detailedHistory?.pagination.perPage ?? 10,
-        page: 1,
-        status: currentState.currentFilter,
-        month: currentState.currentMonth,
-        startDate: currentState.currentStartDate,
-        endDate: currentState.currentEndDate,
-      ));
-    } else {
-      // Initial load
-      final currentYear = DateTime.now().year.toString();
-      add(LoadAttendanceStatistics(year: currentYear));
-      add(LoadMonthlyStatistics(year: currentYear));
-      add(const LoadDetailedHistory());
+    emit(const HistoryLoading());
+    
+    try {
+      if (state is HistoryLoaded) {
+        final currentState = state as HistoryLoaded;
+        
+        // Load all data sequentially to avoid race conditions
+        final currentYear = currentState.currentYear;
+        
+        // 1. Load statistics
+        final statsResult = await getAttendanceStatistics(
+          GetAttendanceStatisticsParams(year: currentYear),
+        );
+        
+        AttendanceStatistics? statistics;
+        statsResult.fold(
+          (failure) {
+            // Log error but continue with other requests
+            print('Error loading statistics: ${failure.message}');
+          },
+          (data) => statistics = data,
+        );
+        
+        // 2. Load monthly statistics
+        final monthlyResult = await getMonthlyStatistics(
+          GetMonthlyStatisticsParams(year: currentYear),
+        );
+        
+        List<MonthlyStatistics>? monthlyStats;
+        monthlyResult.fold(
+          (failure) {
+            print('Error loading monthly stats: ${failure.message}');
+          },
+          (data) => monthlyStats = data,
+        );
+        
+        // 3. Load detailed history
+        final historyResult = await getDetailedAttendanceHistory(
+          GetDetailedAttendanceHistoryParams(
+            limit: currentState.detailedHistory?.pagination.perPage ?? 10,
+            page: 1,
+            status: currentState.currentFilter,
+            month: currentState.currentMonth,
+            startDate: currentState.currentStartDate,
+            endDate: currentState.currentEndDate,
+          ),
+        );
+        
+        historyResult.fold(
+          (failure) {
+            emit(HistoryError(message: failure.message));
+          },
+          (detailedHistory) {
+            emit(HistoryLoaded(
+              statistics: statistics ?? currentState.statistics,
+              monthlyStats: monthlyStats ?? currentState.monthlyStats,
+              detailedHistory: detailedHistory,
+              currentYear: currentYear,
+              currentFilter: currentState.currentFilter,
+              currentMonth: currentState.currentMonth,
+              currentStartDate: currentState.currentStartDate,
+              currentEndDate: currentState.currentEndDate,
+            ));
+          },
+        );
+      } else {
+        // Initial load
+        final currentYear = DateTime.now().year.toString();
+        
+        // Load all data sequentially
+        final statsResult = await getAttendanceStatistics(
+          GetAttendanceStatisticsParams(year: currentYear),
+        );
+        
+        AttendanceStatistics? statistics;
+        statsResult.fold(
+          (failure) => print('Error loading statistics: ${failure.message}'),
+          (data) => statistics = data,
+        );
+        
+        final monthlyResult = await getMonthlyStatistics(
+          GetMonthlyStatisticsParams(year: currentYear),
+        );
+        
+        List<MonthlyStatistics>? monthlyStats;
+        monthlyResult.fold(
+          (failure) => print('Error loading monthly stats: ${failure.message}'),
+          (data) => monthlyStats = data,
+        );
+        
+        final historyResult = await getDetailedAttendanceHistory(
+          GetDetailedAttendanceHistoryParams(),
+        );
+        
+        historyResult.fold(
+          (failure) => emit(HistoryError(message: failure.message)),
+          (detailedHistory) {
+            emit(HistoryLoaded(
+              statistics: statistics,
+              monthlyStats: monthlyStats,
+              detailedHistory: detailedHistory,
+              currentYear: currentYear,
+            ));
+          },
+        );
+      }
+    } catch (e) {
+      emit(HistoryError(message: 'Terjadi kesalahan: ${e.toString()}'));
     }
   }
 }

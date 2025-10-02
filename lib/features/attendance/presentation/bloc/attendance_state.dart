@@ -15,22 +15,30 @@ class AttendanceLoading extends AttendanceState {}
 class AttendanceLoaded extends AttendanceState {
   final TodayAttendance todayAttendance;
   final List<Attendance>? recentAttendance;
+  final String? photoUrl;
+  final String username;
 
   const AttendanceLoaded({
     required this.todayAttendance,
     this.recentAttendance,
+    this.photoUrl,
+    this.username = 'User',
   });
 
   @override
-  List<Object?> get props => [todayAttendance, recentAttendance];
+  List<Object?> get props => [todayAttendance, recentAttendance, photoUrl, username];
 
   AttendanceLoaded copyWith({
     TodayAttendance? todayAttendance,
     List<Attendance>? recentAttendance,
+    String? photoUrl,
+    String? username,
   }) {
     return AttendanceLoaded(
       todayAttendance: todayAttendance ?? this.todayAttendance,
       recentAttendance: recentAttendance ?? this.recentAttendance,
+      photoUrl: photoUrl ?? this.photoUrl,
+      username: username ?? this.username,
     );
   }
 }

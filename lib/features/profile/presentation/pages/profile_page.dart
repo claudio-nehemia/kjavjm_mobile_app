@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:file_picker/file_picker.dart';
+import '../../../../core/widgets/user_avatar.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -46,6 +48,86 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
+  Future<void> _pickAndUploadPhoto() async {
+    try {
+      // Pick image file
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.image,
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) {
+        return;
+      }
+
+      final file = result.files.first;
+
+      // Show loading
+      if (!mounted) return;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Upload photo
+      final profileService = GetIt.instance<ProfileService>();
+      final photoResult = await profileService.updatePhoto(file);
+
+      // Update user data in AuthBloc
+      if (!mounted) return;
+      final currentAuthState = context.read<AuthBloc>().state;
+      if (currentAuthState is AuthAuthenticated) {
+        final updatedUser = User(
+          id: currentAuthState.user.id,
+          name: currentAuthState.user.name,
+          email: currentAuthState.user.email,
+          phone: currentAuthState.user.phone,
+          address: currentAuthState.user.address,
+          city: currentAuthState.user.city,
+          postalCode: currentAuthState.user.postalCode,
+          status: currentAuthState.user.status,
+          profilePicture: photoResult['user']['profile_picture'],
+          photoUrl: photoResult['user']['photo_url'],
+          role: currentAuthState.user.role,
+          department: currentAuthState.user.department,
+          token: currentAuthState.user.token,
+        );
+        
+        context.read<AuthBloc>().add(AuthUserUpdated(updatedUser));
+      }
+
+      // Close loading
+      if (!mounted) return;
+      Navigator.pop(context);
+
+      // Show success message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Foto profil berhasil diperbarui'),
+          backgroundColor: Color(0xFF2E7D32),
+        ),
+      );
+    } catch (e) {
+      // Close loading if open
+      if (mounted && Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      // Show error message
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Gagal mengupload foto: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -85,7 +167,19 @@ class _ProfilePageState extends State<ProfilePage> {
       ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
-          if (state is AuthAuthenticated) {
+          if (state is AuthUnauthenticated) {
+            // Navigate to login and clear all previous routes
+            Navigator.of(context).pushNamedAndRemoveUntil(
+              '/login',
+              (route) => false,
+            );
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Berhasil keluar'),
+                backgroundColor: Color(0xFF2E7D32),
+              ),
+            );
+          } else if (state is AuthAuthenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Profil berhasil diperbarui'),
@@ -144,39 +238,30 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Stack(
                   children: [
-                    CircleAvatar(
-                      radius: 50,
-                      backgroundColor: const Color(0xFF2E7D32),
-                      backgroundImage: state.user.profilePicture != null
-                          ? NetworkImage(state.user.profilePicture!)
-                          : null,
-                      child: state.user.profilePicture == null
-                          ? Text(
-                              state.user.name.isNotEmpty
-                                  ? state.user.name[0].toUpperCase()
-                                  : 'U',
-                              style: const TextStyle(
-                                fontSize: 32,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            )
-                          : null,
+                    UserAvatar(
+                      photoUrl: state.user.photoUrl,
+                      userName: state.user.name,
+                      size: 100,
+                      showBorder: true,
+                      onTap: _pickAndUploadPhoto,
                     ),
                     Positioned(
                       bottom: 0,
                       right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E7D32),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          size: 16,
-                          color: Colors.white,
+                      child: GestureDetector(
+                        onTap: _pickAndUploadPhoto,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2E7D32),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            size: 20,
+                            color: Colors.white,
+                          ),
                         ),
                       ),
                     ),
@@ -695,20 +780,21 @@ class _ProfilePageState extends State<ProfilePage> {
   void _showLogoutDialog() {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           title: const Text('Keluar'),
           content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
               },
               child: const Text('Batal'),
             ),
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(dialogContext).pop();
+                // Use the widget's context, not dialog context
                 context.read<AuthBloc>().add(LogoutRequested());
               },
               child: const Text(

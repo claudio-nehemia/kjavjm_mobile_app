@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import '../../../../core/widgets/user_avatar.dart';
 
 class DashboardHeader extends StatelessWidget {
   final String username;
   final String department;
   final String? profilePicture;
+  final String? photoUrl;
 
   const DashboardHeader({
     super.key,
     required this.username,
     required this.department,
     this.profilePicture,
+    this.photoUrl,
   });
 
   @override
@@ -34,35 +37,12 @@ class DashboardHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Profile Picture
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: Colors.white, width: 2),
-            ),
-            child: profilePicture != null
-                ? ClipRRect(
-                    borderRadius: BorderRadius.circular(28),
-                    child: Image.network(
-                      profilePicture!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Icon(
-                          Icons.person,
-                          color: Colors.white,
-                          size: 32,
-                        );
-                      },
-                    ),
-                  )
-                : const Icon(
-                    Icons.person,
-                    color: Colors.white,
-                    size: 32,
-                  ),
+          // Profile Picture with UserAvatar
+          UserAvatar(
+            photoUrl: photoUrl,
+            userName: username,
+            size: 60,
+            showBorder: true,
           ),
           const SizedBox(width: 16),
           Expanded(
