@@ -8,7 +8,11 @@ import '../entities/attendance_history.dart';
 
 abstract class AttendanceRepository {
   Future<Either<Failure, TodayAttendance>> getTodayAttendance();
-  Future<Either<Failure, Attendance>> checkIn(String status, String? documentation);
+  Future<Either<Failure, Attendance>> checkIn(
+    String status, 
+    String? documentation,
+    {String? latitude, String? longitude, String? location}
+  );
   Future<Either<Failure, Attendance>> checkInWithLeave({
     required String leaveReason,
     required String startDate,
@@ -16,6 +20,9 @@ abstract class AttendanceRepository {
     required int totalDays,
     required String type,
     required dynamic document,
+    String? latitude,
+    String? longitude,
+    String? location,
   });
   Future<Either<Failure, Attendance>> checkOut();
   Future<Either<Failure, Attendance>> checkOutWithOvertime(String reason, String? notes);

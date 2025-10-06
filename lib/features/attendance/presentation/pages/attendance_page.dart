@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../domain/entities/attendance.dart';
 import '../bloc/attendance_bloc.dart';
 import '../bloc/attendance_state.dart';
 import '../bloc/attendance_event.dart';
@@ -10,6 +11,7 @@ import '../widgets/recent_attendance_list.dart';
 import '../../../../injection_container.dart';
 import '../../../../shared/constants/app_constants.dart';
 import '../../../../core/mixins/auto_refresh_mixin.dart';
+import '../../../../core/services/location_service.dart';
 
 class AttendancePage extends StatelessWidget {
   const AttendancePage({super.key});
@@ -31,6 +33,8 @@ class AttendanceView extends StatefulWidget {
 }
 
 class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
+  final LocationService _locationService = sl<LocationService>();
+
   @override
   void initState() {
     super.initState();
@@ -41,6 +45,27 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
   void onAutoRefresh() {
     // Refresh attendance data
     context.read<AttendanceBloc>().add(GetTodayAttendanceEvent());
+  }
+
+  Future<Map<String, String>?> _getLocation() async {
+    try {
+      final locationData = await _locationService.getLocationWithAddress();
+      return {
+        'latitude': locationData['latitude'],
+        'longitude': locationData['longitude'],
+        'location': locationData['location'],
+      };
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal mendapatkan lokasi: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+      return null;
+    }
   }
 
   @override
@@ -87,6 +112,12 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                       username: state is AttendanceLoaded ? state.username : 'User',
                     ),
                     const SizedBox(height: AppSizes.paddingLarge),
+                    
+                    // Last Attendance Info (including location)
+                    if (state is AttendanceLoaded && state.todayAttendance.attendance != null) ...[
+                      _buildLastAttendanceInfo(state.todayAttendance.attendance!),
+                      const SizedBox(height: AppSizes.paddingLarge),
+                    ],
                     
                     // Status dan Action Cards
                     if (state is AttendanceLoaded) ...[
@@ -189,6 +220,232 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
           ),
       ],
     );
+  }
+
+  Widget _buildLastAttendanceInfo(Attendance attendance) {
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.paddingMedium),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.info_outline,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                'Absensi Hari Ini',
+                style: AppTextStyles.body1.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.primary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSizes.paddingSmall),
+          const Divider(),
+          const SizedBox(height: AppSizes.paddingSmall),
+          
+          // Check In Time
+          if (attendance.checkIn != null)
+            _buildInfoRow(
+              icon: Icons.login,
+              label: 'Check In',
+              value: attendance.checkIn!,
+              color: AppColors.success,
+            ),
+          
+          // Check Out Time
+          if (attendance.checkOut != null) ...[
+            const SizedBox(height: AppSizes.paddingSmall),
+            _buildInfoRow(
+              icon: Icons.logout,
+              label: 'Check Out',
+              value: attendance.checkOut!,
+              color: AppColors.danger,
+            ),
+          ],
+          
+          // Location
+          if (attendance.location != null && attendance.location!.isNotEmpty) ...[
+            const SizedBox(height: AppSizes.paddingSmall),
+            _buildInfoRow(
+              icon: Icons.location_on,
+              label: 'Lokasi',
+              value: attendance.location!,
+              color: AppColors.info,
+              isLocation: true,
+            ),
+          ],
+          
+          // Status
+          const SizedBox(height: AppSizes.paddingSmall),
+          _buildInfoRow(
+            icon: Icons.check_circle,
+            label: 'Status',
+            value: _getStatusLabel(attendance.status),
+            color: _getStatusColor(attendance.status),
+          ),
+
+        
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String label,
+    required String value,
+    required Color color,
+    bool isLocation = false,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 2),
+              if (isLocation)
+                _buildLocationContent(value)
+              else
+                Text(
+                  value,
+                  style: AppTextStyles.body2.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationContent(String location) {
+    final isTooLong = location.length > 40;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          location,
+          style: AppTextStyles.body2.copyWith(
+            fontWeight: FontWeight.w500,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        if (isTooLong) ...[
+          const SizedBox(height: 4),
+          GestureDetector(
+            onTap: () => _showFullLocationDialog(location),
+            child: Text(
+              'Lihat Selengkapnya',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w600,
+                decoration: TextDecoration.underline,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  void _showFullLocationDialog(String location) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Row(
+            children: const [
+              Icon(
+                Icons.location_on,
+                color: AppColors.primary,
+                size: 24,
+              ),
+              SizedBox(width: 8),
+              Text('Lokasi Lengkap'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              location,
+              style: AppTextStyles.body2,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Tutup',
+                style: AppTextStyles.body2.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  String _getStatusLabel(String status) {
+    switch (status.toLowerCase()) {
+      case 'present':
+        return 'Hadir';
+      case 'late':
+        return 'Terlambat';
+      case 'leave':
+        return 'Izin';
+      case 'sick':
+        return 'Sakit';
+      default:
+        return status;
+    }
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'present':
+        return AppColors.success;
+      case 'late':
+        return AppColors.warning;
+      case 'leave':
+      case 'sick':
+        return AppColors.info;
+      default:
+        return Colors.grey;
+    }
   }
 
   bool _canCheckIn(DateTime now, todayAttendance) {
@@ -323,14 +580,53 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
             ListTile(
               leading: Icon(Icons.check_circle, color: AppColors.success),
               title: Text(isLate ? 'Hadir (Terlambat)' : 'Hadir'),
-              onTap: () {
+              onTap: () async {
                 Navigator.pop(dialogContext);
+                
+                // Show loading
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                // Get location
+                final locationData = await _getLocation();
+                
+                // Hide loading
+                if (mounted) Navigator.pop(context);
+                
+                if (locationData == null) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Gagal mendapatkan lokasi. Silakan coba lagi.')),
+                    );
+                  }
+                  return;
+                }
+                
                 if (isLate) {
-                  _showDocumentationDialog(context, 'present');
-                } else {
-                  context.read<AttendanceBloc>().add(
-                    CheckInEvent(status: 'present', documentation: null),
+                  _showDocumentationDialog(
+                    context, 
+                    'present',
+                    latitude: locationData['latitude'],
+                    longitude: locationData['longitude'],
+                    location: locationData['location'],
                   );
+                } else {
+                  if (mounted) {
+                    context.read<AttendanceBloc>().add(
+                      CheckInEvent(
+                        status: 'present',
+                        documentation: null,
+                        latitude: locationData['latitude'],
+                        longitude: locationData['longitude'],
+                        location: locationData['location'],
+                      ),
+                    );
+                  }
                 }
               },
             ),
@@ -592,7 +888,11 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
     );
   }
 
-  void _showDocumentationDialog(BuildContext context, String status) {
+  void _showDocumentationDialog(
+    BuildContext context, 
+    String status,
+    {String? latitude, String? longitude, String? location}
+  ) {
     final controller = TextEditingController();
     
     showDialog(
@@ -616,7 +916,13 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
             onPressed: () {
               Navigator.pop(dialogContext);
               context.read<AttendanceBloc>().add(
-                CheckInEvent(status: status, documentation: controller.text),
+                CheckInEvent(
+                  status: status, 
+                  documentation: controller.text,
+                  latitude: latitude,
+                  longitude: longitude,
+                  location: location,
+                ),
               );
             },
             child: const Text('Kirim'),
@@ -840,7 +1146,7 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
               child: const Text('Batal'),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 // Validasi
                 if (reasonController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
@@ -863,7 +1169,6 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                   return;
                 }
                 
-                // TODO: Validasi dokumen sudah dipilih
                 if (selectedDocument == null) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
                     const SnackBar(content: Text('Dokumen pendukung harus dipilih')),
@@ -873,21 +1178,50 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                 
                 Navigator.pop(dialogContext);
                 
+                // Show loading while getting location
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (ctx) => const Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                );
+                
+                // Get location
+                final locationData = await _getLocation();
+                
+                // Hide loading
+                if (mounted) Navigator.pop(context);
+                
+                if (locationData == null) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Gagal mendapatkan lokasi. Silakan coba lagi.')),
+                    );
+                  }
+                  return;
+                }
+                
                 // Format date strings for API
                 final startDateStr = '${startDate!.year}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}';
                 final endDateStr = '${endDate!.year}-${endDate!.month.toString().padLeft(2, '0')}-${endDate!.day.toString().padLeft(2, '0')}';
                 
                 // Submit leave request with comprehensive data
-                context.read<AttendanceBloc>().add(
-                  CheckInWithLeaveEvent(
-                    leaveReason: reasonController.text.trim(),
-                    startDate: startDateStr,
-                    endDate: endDateStr,
-                    totalDays: totalDays,
-                    type: selectedLeaveType,
-                    document: selectedDocument!,
-                  ),
-                );
+                if (mounted) {
+                  context.read<AttendanceBloc>().add(
+                    CheckInWithLeaveEvent(
+                      leaveReason: reasonController.text.trim(),
+                      startDate: startDateStr,
+                      endDate: endDateStr,
+                      totalDays: totalDays,
+                      type: selectedLeaveType,
+                      document: selectedDocument!,
+                      latitude: locationData['latitude'],
+                      longitude: locationData['longitude'],
+                      location: locationData['location'],
+                    ),
+                  );
+                }
               },
               child: const Text('Ajukan Izin'),
             ),

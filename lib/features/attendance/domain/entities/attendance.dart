@@ -9,6 +9,9 @@ class Attendance extends Equatable {
   final String? checkIn;
   final String? checkOut;
   final String? documentation;
+  final String? latitude;
+  final String? longitude;
+  final String? location;
 
   const Attendance({
     required this.id,
@@ -19,6 +22,9 @@ class Attendance extends Equatable {
     this.checkIn,
     this.checkOut,
     this.documentation,
+    this.latitude,
+    this.longitude, 
+    this.location,
   });
 
   @override
@@ -31,6 +37,9 @@ class Attendance extends Equatable {
         checkIn,
         checkOut,
         documentation,
+        latitude,
+        longitude,
+        location,
       ];
 }
 

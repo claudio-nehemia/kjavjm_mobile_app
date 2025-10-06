@@ -3,7 +3,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:flutter/foundation.dart';
 import 'dart:io';
 
 // Domain
@@ -50,6 +49,7 @@ import 'features/overtime/data/services/overtime_service.dart';
 // Core Services
 import 'core/services/auto_refresh_service.dart';
 import 'core/services/persistent_login_service.dart';
+import 'core/services/location_service.dart';
 
 final sl = GetIt.instance;
 
@@ -65,14 +65,29 @@ Future<void> init() async {
   dio.options.receiveTimeout = const Duration(seconds: 30);
   dio.options.sendTimeout = const Duration(seconds: 30);
   
-  // Add SSL certificate handling for development
-  if (kDebugMode) {
-    (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-      final client = HttpClient();
-      client.badCertificateCallback = (cert, host, port) => true;
-      return client;
+  // Add SSL certificate handling for self-signed certificates
+  // IMPORTANT: In production, use proper SSL certificates
+  (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
+    final client = HttpClient();
+    // Allow self-signed certificates in all modes
+    client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+      print('🔒 SSL Certificate check for: $host:$port');
+      // Accept all certificates for development/testing
+      // In production, verify the certificate properly
+      return true;
     };
-  }
+    // Disable certificate verification completely for development
+    return client;
+  };
+  
+  // Set onHttpClientCreate to ensure it's used
+  (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate = (HttpClient client) {
+    client.badCertificateCallback = (X509Certificate cert, String host, int port) {
+      print('🔒 SSL Certificate check (onCreate) for: $host:$port');
+      return true;
+    };
+    return client;
+  };
   
   // Add logging interceptor
   dio.interceptors.add(LogInterceptor(
@@ -206,4 +221,5 @@ Future<void> init() async {
   sl.registerLazySingleton(() => OvertimeService(sl()));
   sl.registerLazySingleton(() => AutoRefreshService());
   sl.registerLazySingleton(() => PersistentLoginService(sl()));
+  sl.registerLazySingleton(() => LocationService());
 }

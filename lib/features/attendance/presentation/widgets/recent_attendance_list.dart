@@ -6,9 +6,14 @@ import '../bloc/attendance_state.dart';
 import '../../domain/entities/attendance.dart';
 import 'package:intl/intl.dart';
 
-class RecentAttendanceList extends StatelessWidget {
+class RecentAttendanceList extends StatefulWidget {
   const RecentAttendanceList({super.key});
 
+  @override
+  State<RecentAttendanceList> createState() => _RecentAttendanceListState();
+}
+
+class _RecentAttendanceListState extends State<RecentAttendanceList> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<AttendanceBloc, AttendanceState>(
@@ -142,12 +147,93 @@ class RecentAttendanceList extends StatelessWidget {
                       ],
                     ],
                   ),
+                  
+                  // Location Information
+                  if (attendance.location != null && attendance.location!.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    _buildLocationRow(attendance.location!),
+                  ],
                 ],
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildLocationRow(String location) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(Icons.location_on, size: 14, color: AppColors.info),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                location,
+                style: AppTextStyles.caption.copyWith(
+                  color: Colors.grey[700],
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        GestureDetector(
+          onTap: () => _showFullLocationDialog(location),
+          child: Text(
+            'Lihat Selengkapnya',
+            style: AppTextStyles.caption.copyWith(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              decoration: TextDecoration.underline,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showFullLocationDialog(String location) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(
+                Icons.location_on,
+                color: AppColors.primary,
+                size: 24,
+              ),
+              const SizedBox(width: 8),
+              const Text('Lokasi Lengkap'),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Text(
+              location,
+              style: AppTextStyles.body2,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Tutup',
+                style: AppTextStyles.body2.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -27,9 +27,21 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   }
 
   @override
-  Future<Either<Failure, Attendance>> checkIn(String status, String? documentation) async {
+  Future<Either<Failure, Attendance>> checkIn(
+    String status, 
+    String? documentation, {
+    String? latitude,
+    String? longitude,
+    String? location,
+  }) async {
     try {
-      final result = await remoteDataSource.checkIn(status, documentation);
+      final result = await remoteDataSource.checkIn(
+        status, 
+        documentation,
+        latitude: latitude,
+        longitude: longitude,
+        location: location,
+      );
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -44,6 +56,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required int totalDays,
     required String type,
     required dynamic document,
+    String? latitude,
+    String? longitude,
+    String? location,
   }) async {
     try {
       final result = await remoteDataSource.checkInWithLeave(
@@ -53,6 +68,9 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
         totalDays: totalDays,
         type: type,
         document: document,
+        latitude: latitude,
+        longitude: longitude,
+        location: location,
       );
       return Right(result);
     } on ServerException catch (e) {

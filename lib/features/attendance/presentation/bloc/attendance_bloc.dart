@@ -82,6 +82,9 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
     final result = await checkIn(CheckInParams(
       status: event.status,
       documentation: event.documentation,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      location: event.location,
     ));
     
     result.fold(
@@ -106,6 +109,9 @@ class AttendanceBloc extends Bloc<AttendanceEvent, AttendanceState> {
       totalDays: event.totalDays,
       type: event.type,
       document: event.document,
+      latitude: event.latitude,
+      longitude: event.longitude,
+      location: event.location,
     ));
     
     result.fold(

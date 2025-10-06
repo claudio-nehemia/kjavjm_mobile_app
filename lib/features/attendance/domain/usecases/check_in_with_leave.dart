@@ -18,6 +18,9 @@ class CheckInWithLeave implements UseCase<Attendance, CheckInWithLeaveParams> {
       totalDays: params.totalDays,
       type: params.type,
       document: params.document,
+      latitude: params.latitude,
+      longitude: params.longitude,
+      location: params.location,
     );
   }
 }
@@ -29,6 +32,9 @@ class CheckInWithLeaveParams {
   final int totalDays;
   final String type;
   final dynamic document;
+  final String? latitude;
+  final String? longitude;
+  final String? location;
 
   CheckInWithLeaveParams({
     required this.leaveReason,
@@ -37,5 +43,8 @@ class CheckInWithLeaveParams {
     required this.totalDays,
     required this.type,
     required this.document,
+    this.latitude,
+    this.longitude,
+    this.location,
   });
 }

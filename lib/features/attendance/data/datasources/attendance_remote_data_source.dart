@@ -11,7 +11,11 @@ import '../models/attendance_history_model.dart';
 
 abstract class AttendanceRemoteDataSource {
   Future<TodayAttendanceModel> getTodayAttendance();
-  Future<AttendanceModel> checkIn(String status, String? documentation);
+  Future<AttendanceModel> checkIn(
+    String status, 
+    String? documentation,
+    {String? latitude, String? longitude, String? location}
+  );
   Future<AttendanceModel> checkInWithLeave({
     required String leaveReason,
     required String startDate,
@@ -19,6 +23,9 @@ abstract class AttendanceRemoteDataSource {
     required int totalDays,
     required String type,
     required PlatformFile document,
+    String? latitude,
+    String? longitude,
+    String? location,
   });
   Future<AttendanceModel> checkOut();
   Future<AttendanceModel> checkOutWithOvertime(String reason, String? notes);
@@ -85,7 +92,11 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
   }
 
   @override
-  Future<AttendanceModel> checkIn(String status, String? documentation) async {
+  Future<AttendanceModel> checkIn(
+    String status, 
+    String? documentation,
+    {String? latitude, String? longitude, String? location}
+  ) async {
     try {
       final token = await authToken;
       final response = await dio.post(
@@ -93,6 +104,9 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
         data: {
           'status': status,
           if (documentation != null) 'documentation': documentation,
+          if (latitude != null) 'latitude': latitude,
+          if (longitude != null) 'longitude': longitude,
+          if (location != null) 'location': location,
         },
         options: Options(
           headers: {
@@ -134,6 +148,9 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
     required int totalDays,
     required String type,
     required PlatformFile document,
+    String? latitude,
+    String? longitude,
+    String? location,
   }) async {
     try {
       final token = await authToken;
@@ -150,6 +167,9 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
           document.path!,
           filename: document.name,
         ),
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
+        if (location != null) 'location': location,
       });
 
       final response = await dio.post(

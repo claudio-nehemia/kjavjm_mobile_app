@@ -10,6 +10,9 @@ class AttendanceModel extends Attendance {
     super.checkIn,
     super.checkOut,
     super.documentation,
+    super.latitude,
+    super.longitude,
+    super.location,
   });
 
   factory AttendanceModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +25,9 @@ class AttendanceModel extends Attendance {
       photoUrl: json['photo_url'],
       checkOut: json['check_out'],
       documentation: json['documentation'],
+      latitude: json['latitude'],
+      longitude: json['longitude'],
+      location: json['location'],
     );
   }
 
@@ -34,6 +40,9 @@ class AttendanceModel extends Attendance {
       'check_in': checkIn,
       'check_out': checkOut,
       'documentation': documentation,
+      'latitude': latitude,
+      'longitude': longitude,
+      'location': location,
     };
   }
 }
