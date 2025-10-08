@@ -23,7 +23,7 @@ workflows:
       - name: Build iOS Simulator
         script: |
           flutter build ios --simulator --debug
-          # Atau gunakan --release untuk release build
+          # Gunakan --release jika ingin build release
           # flutter build ios --simulator --release
 
       - name: Create Simulator Build Archive
@@ -42,7 +42,7 @@ workflows:
           success: true
           failure: true
 
-  # iOS Device Build Workflow (Production)
+  # iOS Device Build Workflow (Tanpa App Store)
   ios-device-workflow:
     name: iOS Device Build
     max_build_duration: 60
@@ -51,33 +51,11 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        # Add your app store credentials group
-        - app_store_credentials
       vars:
         XCODE_WORKSPACE: "Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
-        BUNDLE_ID: "com.example.kjavjmmobileapp" # Ganti dengan bundle ID Anda
-        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        APP_STORE_CONNECT_KEY_IDENTIFIER: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
-        CERTIFICATE_PRIVATE_KEY: $CERTIFICATE_PRIVATE_KEY
+        BUNDLE_ID: "com.example.kjavjmmobileapp" # Ganti dengan bundle ID kamu
     scripts:
-      - name: Set up keychain
-        script: |
-          keychain initialize
-
-      - name: Fetch signing files
-        script: |
-          app-store-connect fetch-signing-files "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
-
-      - name: Use certificate and profile
-        script: |
-          keychain add-certificates
-          xcode-project use-profiles
-
       - name: Get Flutter packages
         script: |
           flutter pub get
@@ -86,10 +64,9 @@ workflows:
         script: |
           cd ios && pod install
 
-      - name: Flutter build iOS
+      - name: Build iOS IPA (no signing)
         script: |
-          flutter build ipa --release \
-            --export-options-plist=/Users/builder/export_options.plist
+          flutter build ipa --release --no-codesign
 
     artifacts:
       - build/ios/ipa/*.ipa
@@ -102,12 +79,6 @@ workflows:
         notify:
           success: true
           failure: true
-      app_store_connect:
-        auth: integration
-        # Uncomment jika ingin auto-submit ke TestFlight
-        # submit_to_testflight: true
-        # beta_groups:
-        #   - Internal Testers
 
   # Android Build Workflow (Bonus)
   android-workflow:
