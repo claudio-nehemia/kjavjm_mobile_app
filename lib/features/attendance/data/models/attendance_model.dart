@@ -101,4 +101,19 @@ class TodayAttendanceModel extends TodayAttendance {
       canCheckOut: json['can_check_out'] ?? false,
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'success': success,
+      'message': message,
+      'data': attendance != null 
+          ? (attendance as AttendanceModel).toJson()
+          : null,
+      'rules': rules != null 
+          ? (rules as AturanJamModel).toJson()
+          : null,
+      'can_check_in': canCheckIn,
+      'can_check_out': canCheckOut,
+    };
+  }
 }

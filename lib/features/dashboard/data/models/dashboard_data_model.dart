@@ -1,5 +1,6 @@
 import '../../domain/entities/dashboard_data.dart';
 import 'attendance_log_model.dart';
+import '../../../attendance/data/models/attendance_model.dart';
 
 class AttendanceSummaryModel extends AttendanceSummary {
   const AttendanceSummaryModel({
@@ -30,6 +31,7 @@ class DashboardDataModel extends DashboardData {
     required super.monthlySummary,
     required super.weeklySummary,
     required super.attendanceLog,
+    super.todayAttendance,
   });
 
   factory DashboardDataModel.fromJson(Map<String, dynamic> json) {
@@ -49,6 +51,9 @@ class DashboardDataModel extends DashboardData {
       attendanceLog: (json['attendance_log'] as List<dynamic>?)
           ?.map((log) => AttendanceLogModel.fromJson(log))
           .toList() ?? [],
+      todayAttendance: json['today_attendance'] != null 
+          ? TodayAttendanceModel.fromJson(json['today_attendance'])
+          : null,
     );
   }
 
@@ -76,6 +81,9 @@ class DashboardDataModel extends DashboardData {
       'attendance_log': attendanceLog
           .map((log) => (log as AttendanceLogModel).toJson())
           .toList(),
+      'today_attendance': todayAttendance != null 
+          ? (todayAttendance as TodayAttendanceModel).toJson()
+          : null,
     };
   }
 }

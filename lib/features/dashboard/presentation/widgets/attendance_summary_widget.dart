@@ -17,14 +17,20 @@ class AttendanceSummaryWidget extends StatelessWidget {
       children: [
         // Ringkasan Bulanan
         _buildSummarySection(
-          title: 'Ringkasan Kehadiran Bulan Ini',
+          title: 'Kehadiran Bulan Ini',
+          subtitle: 'Total kehadiran periode bulanan',
+          icon: Icons.calendar_month_rounded,
           summary: monthlySummary,
+          gradientColors: [Colors.purple[600]!, Colors.purple[800]!],
         ),
         const SizedBox(height: 16),
         // Ringkasan Mingguan
         _buildSummarySection(
-          title: 'Ringkasan Kehadiran Minggu Ini',
+          title: 'Kehadiran Minggu Ini',
+          subtitle: 'Total kehadiran periode mingguan',
+          icon: Icons.calendar_view_week_rounded,
           summary: weeklySummary,
+          gradientColors: [Colors.blue[600]!, Colors.blue[800]!],
         ),
       ],
     );
@@ -32,96 +38,191 @@ class AttendanceSummaryWidget extends StatelessWidget {
 
   Widget _buildSummarySection({
     required String title,
+    required String subtitle,
+    required IconData icon,
     required AttendanceSummary summary,
+    required List<Color> gradientColors,
   }) {
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
+        gradient: LinearGradient(
+          colors: [
+            gradientColors[0].withOpacity(0.05),
+            Colors.white,
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: gradientColors[0].withOpacity(0.1),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            // Header with gradient
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: gradientColors,
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      icon,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.white,
+                            letterSpacing: -0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          subtitle,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.white.withOpacity(0.9),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildSummaryItem(
-                  title: 'Hadir',
-                  count: summary.hadir,
-                  color: Colors.green,
-                ),
+            
+            // Stats Grid
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildSummaryCard(
+                      title: 'Hadir',
+                      count: summary.hadir,
+                      icon: Icons.check_circle_rounded,
+                      color: Colors.green,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      title: 'Terlambat',
+                      count: summary.terlambat,
+                      icon: Icons.schedule_rounded,
+                      color: Colors.orange,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      title: 'Izin',
+                      count: summary.izin,
+                      icon: Icons.info_rounded,
+                      color: Colors.blue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _buildSummaryCard(
+                      title: 'Absen',
+                      count: summary.absen,
+                      icon: Icons.cancel_rounded,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
               ),
-              Expanded(
-                child: _buildSummaryItem(
-                  title: 'Terlambat',
-                  count: summary.terlambat,
-                  color: Colors.orange,
-                ),
-              ),
-              Expanded(
-                child: _buildSummaryItem(
-                  title: 'Izin',
-                  count: summary.izin,
-                  color: Colors.blue,
-                ),
-              ),
-              Expanded(
-                child: _buildSummaryItem(
-                  title: 'Absen',
-                  count: summary.absen,
-                  color: Colors.red,
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSummaryItem({
+  Widget _buildSummaryCard({
     required String title,
     required int count,
+    required IconData icon,
     required Color color,
   }) {
-    return Column(
-      children: [
-        Text(
-          count.toString(),
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1.5,
         ),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              icon,
+              color: color,
+              size: 20,
+            ),
           ),
-          textAlign: TextAlign.center,
-        ),
-      ],
+          const SizedBox(height: 12),
+          Text(
+            count.toString(),
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: color,
+              letterSpacing: -1,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey[700],
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.3,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
     );
   }
 }

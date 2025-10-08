@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../models/dashboard_data_model.dart';
+import '../../../attendance/data/models/attendance_model.dart';
 import '../../../../core/error/exceptions.dart';
 
 abstract class DashboardRemoteDataSource {
@@ -22,7 +23,29 @@ class DashboardRemoteDataSourceImpl implements DashboardRemoteDataSource {
       print('📦 Response Data: ${response.data}');
       
       if (response.statusCode == 200) {
-        return DashboardDataModel.fromJson(response.data);
+        // Fetch today's attendance separately
+        TodayAttendanceModel? todayAttendance;
+        try {
+          print('🚀 API Call: GET /attendance/today');
+          final attendanceResponse = await dio.get('/attendance/today');
+          print('✅ API Success: GET /attendance/today');
+          print('📦 Attendance Response Data: ${attendanceResponse.data}');
+          
+          if (attendanceResponse.statusCode == 200) {
+            todayAttendance = TodayAttendanceModel.fromJson(attendanceResponse.data);
+          }
+        } catch (e) {
+          print('⚠️ Failed to fetch today attendance: $e');
+          // Continue without today's attendance if it fails
+        }
+        
+        // Merge today's attendance into dashboard data
+        final dashboardJson = Map<String, dynamic>.from(response.data);
+        if (todayAttendance != null) {
+          dashboardJson['today_attendance'] = todayAttendance.toJson();
+        }
+        
+        return DashboardDataModel.fromJson(dashboardJson);
       } else {
         print('❌ API Error: Status ${response.statusCode}');
         throw ServerException(message: 'Server returned status ${response.statusCode}');

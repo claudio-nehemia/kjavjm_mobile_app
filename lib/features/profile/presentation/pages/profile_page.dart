@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../../../core/widgets/user_avatar.dart';
+import '../../../../shared/constants/app_constants.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/user.dart';
 import '../../data/services/profile_service.dart';
+import '../widgets/modern_profile_header.dart';
+import '../widgets/modern_stats_card.dart';
+import '../widgets/modern_menu_section.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -132,43 +135,9 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
-      appBar: AppBar(
-        title: const Text(
-          'Profil',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: const Color(0xFF2E7D32),
-        elevation: 0,
-        actions: [
-          if (_isEditingProfile)
-            TextButton(
-              onPressed: _saveProfile,
-              child: const Text(
-                'Simpan',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-          if (!_isEditingProfile && !_isChangingPassword)
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _isEditingProfile = true;
-                });
-              },
-              child: const Text(
-                'Edit',
-                style: TextStyle(color: Colors.white),
-              ),
-            ),
-        ],
-      ),
       body: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
           if (state is AuthUnauthenticated) {
-            // Navigate to login and clear all previous routes
             Navigator.of(context).pushNamedAndRemoveUntil(
               '/login',
               (route) => false,
@@ -176,14 +145,14 @@ class _ProfilePageState extends State<ProfilePage> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Berhasil keluar'),
-                backgroundColor: Color(0xFF2E7D32),
+                backgroundColor: AppColors.success,
               ),
             );
           } else if (state is AuthAuthenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Profil berhasil diperbarui'),
-                backgroundColor: Color(0xFF2E7D32),
+                backgroundColor: AppColors.success,
               ),
             );
             setState(() {
@@ -194,140 +163,270 @@ class _ProfilePageState extends State<ProfilePage> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${state.message}'),
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.danger,
               ),
             );
           }
         },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              _buildProfileHeader(),
-              const SizedBox(height: 20),
-              _buildProfileForm(),
-              const SizedBox(height: 20),
-              _buildChangePasswordSection(),
-              const SizedBox(height: 20),
-              _buildLogoutButton(),
-            ],
+        child: BlocBuilder<AuthBloc, AuthState>(
+          builder: (context, state) {
+            if (state is! AuthAuthenticated) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            return CustomScrollView(
+              slivers: [
+                // Modern App Bar
+                SliverAppBar(
+                  expandedHeight: 240,
+                  floating: false,
+                  pinned: true,
+                  backgroundColor: AppColors.primary,
+                  flexibleSpace: FlexibleSpaceBar(
+                    background: ModernProfileHeader(
+                      key: ValueKey(state.user.photoUrl), // Force rebuild when photo changes
+                      name: state.user.name,
+                      photoUrl: state.user.photoUrl,
+                      email: state.user.email,
+                      department: state.user.department?.name ?? '-',
+                      userId: state.user.id.toString(),
+                      onEditPhoto: _pickAndUploadPhoto,
+                    ),
+                  ),
+                  actions: [
+                    if (_isEditingProfile)
+                      TextButton.icon(
+                        onPressed: _saveProfile,
+                        icon: const Icon(Icons.check, color: Colors.white, size: 20),
+                        label: const Text(
+                          'Simpan',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                  ],
+                ),
+
+                // Body Content
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      children: [
+                        // Statistics Card (Optional - can show attendance stats)
+                        if (!_isEditingProfile && !_isChangingPassword)
+                          ModernStatsCard(
+                            stats: [
+                              StatItem(
+                                icon: Icons.check_circle_rounded,
+                                label: 'Hadir',
+                                value: 0,
+                                color: AppColors.success,
+                              ),
+                              StatItem(
+                                icon: Icons.event_busy_rounded,
+                                label: 'Izin',
+                                value: 0,
+                                color: AppColors.warning,
+                              ),
+                              StatItem(
+                                icon: Icons.cancel_rounded,
+                                label: 'Tidak Hadir',
+                                value: 0,
+                                color: AppColors.danger,
+                              ),
+                            ],
+                          ),
+                        
+                        if (!_isEditingProfile && !_isChangingPassword)
+                          const SizedBox(height: 20),
+
+                        // Profile Form or Menu
+                        if (_isEditingProfile)
+                          _buildProfileForm()
+                        else if (_isChangingPassword)
+                          _buildChangePasswordSection()
+                        else
+                          _buildModernMenu(state),
+
+                        const SizedBox(height: 20),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernMenu(AuthAuthenticated state) {
+    return Column(
+      children: [
+        // Account Settings Menu
+        ModernMenuSection(
+          title: 'Pengaturan Akun',
+          items: [
+            ModernMenuItem(
+              icon: Icons.person_rounded,
+              iconColor: AppColors.primary,
+              title: 'Edit Profil',
+              subtitle: 'Perbarui informasi pribadi Anda',
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+              onTap: () {
+                setState(() {
+                  _isEditingProfile = true;
+                });
+              },
+            ),
+            ModernMenuItem(
+              icon: Icons.lock_rounded,
+              iconColor: AppColors.warning,
+              title: 'Ubah Password',
+              subtitle: 'Tingkatkan keamanan akun Anda',
+              trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+              onTap: () {
+                setState(() {
+                  _isChangingPassword = true;
+                });
+              },
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        // System Information Menu
+        ModernMenuSection(
+          title: 'Informasi Sistem',
+          items: [
+            ModernMenuItem(
+              icon: Icons.email_rounded,
+              iconColor: AppColors.info,
+              title: 'Email',
+              subtitle: state.user.email,
+              trailing: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  'Verified',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: AppColors.info,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              onTap: () {},
+            ),
+            ModernMenuItem(
+              icon: Icons.badge_rounded,
+              iconColor: AppColors.primary,
+              title: 'Role',
+              subtitle: state.user.role?.name ?? '-',
+              onTap: () {},
+            ),
+            ModernMenuItem(
+              icon: Icons.business_rounded,
+              iconColor: AppColors.secondary,
+              title: 'Departemen',
+              subtitle: state.user.department?.name ?? '-',
+              onTap: () {},
+            ),
+            ModernMenuItem(
+              icon: Icons.verified_user_rounded,
+              iconColor: state.user.status?.toLowerCase() == 'active' || state.user.status == null
+                  ? AppColors.success
+                  : AppColors.danger,
+              title: 'Status',
+              subtitle: state.user.status ?? 'Aktif',
+              onTap: () {},
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 20),
+
+        // Logout Button
+        _buildModernLogoutButton(),
+      ],
+    );
+  }
+
+  Widget _buildModernLogoutButton() {
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            AppColors.danger.withOpacity(0.1),
+            AppColors.danger.withOpacity(0.05),
+          ],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.danger.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _showLogoutDialog,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.danger.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    Icons.logout_rounded,
+                    color: AppColors.danger,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'Keluar dari Akun',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.danger,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileHeader() {
-    return BlocBuilder<AuthBloc, AuthState>(
-      builder: (context, state) {
-        if (state is AuthAuthenticated) {
-          return Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Stack(
-                  children: [
-                    UserAvatar(
-                      photoUrl: state.user.photoUrl,
-                      userName: state.user.name,
-                      size: 100,
-                      showBorder: true,
-                      onTap: _pickAndUploadPhoto,
-                    ),
-                    Positioned(
-                      bottom: 0,
-                      right: 0,
-                      child: GestureDetector(
-                        onTap: _pickAndUploadPhoto,
-                        child: Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF2E7D32),
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white, width: 2),
-                          ),
-                          child: const Icon(
-                            Icons.camera_alt,
-                            size: 20,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  state.user.name,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF2E7D32),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  state.user.email,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: (state.user.status?.toLowerCase() == 'active' || state.user.status == null)
-                            ? const Color(0xFF2E7D32).withOpacity(0.1)
-                            : Colors.red.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        state.user.status ?? 'Aktif',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: (state.user.status?.toLowerCase() == 'active' || state.user.status == null)
-                              ? const Color(0xFF2E7D32)
-                              : Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }
-        return const SizedBox();
-      },
-    );
-  }
-
   Widget _buildProfileForm() {
     return Container(
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
             offset: const Offset(0, 2),
           ),
         ],
@@ -337,35 +436,84 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header with Cancel Button
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primary.withOpacity(0.15),
+                        AppColors.primary.withOpacity(0.08),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    color: AppColors.primary,
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Edit Profil',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.onSurface,
+                      letterSpacing: -0.5,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _isEditingProfile = false;
+                      _loadUserData();
+                    });
+                  },
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            
             const Text(
               'Informasi Personal',
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF2E7D32),
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.onSurface,
+                letterSpacing: 0.5,
               ),
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _nameController,
               label: 'Nama Lengkap',
-              icon: Icons.person,
-              enabled: _isEditingProfile,
+              icon: Icons.person_rounded,
+              enabled: true,
               required: true,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _phoneController,
               label: 'Nomor Telepon',
-              icon: Icons.phone,
-              enabled: _isEditingProfile,
+              icon: Icons.phone_rounded,
+              enabled: true,
             ),
             const SizedBox(height: 16),
             _buildTextField(
               controller: _addressController,
               label: 'Alamat',
-              icon: Icons.home,
-              enabled: _isEditingProfile,
+              icon: Icons.home_rounded,
+              enabled: true,
               maxLines: 2,
             ),
             const SizedBox(height: 16),
@@ -375,8 +523,8 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: _buildTextField(
                     controller: _cityController,
                     label: 'Kota',
-                    icon: Icons.location_city,
-                    enabled: _isEditingProfile,
+                    icon: Icons.location_city_rounded,
+                    enabled: true,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -384,50 +532,37 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: _buildTextField(
                     controller: _postalCodeController,
                     label: 'Kode Pos',
-                    icon: Icons.mail,
-                    enabled: _isEditingProfile,
+                    icon: Icons.markunread_mailbox_rounded,
+                    enabled: true,
                   ),
                 ),
               ],
             ),
-            // Read-only fields
-            const SizedBox(height: 20),
-            const Text(
-              'Informasi Sistem',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.grey,
+            const SizedBox(height: 24),
+            
+            // Save Button
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _saveProfile,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Simpan Perubahan',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            BlocBuilder<AuthBloc, AuthState>(
-              builder: (context, state) {
-                if (state is AuthAuthenticated) {
-                  return Column(
-                    children: [
-                      _buildReadOnlyField(
-                        label: 'Email',
-                        value: state.user.email,
-                        icon: Icons.email,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildReadOnlyField(
-                        label: 'Role',
-                        value: state.user.role?.name ?? '-',
-                        icon: Icons.badge,
-                      ),
-                      const SizedBox(height: 12),
-                      _buildReadOnlyField(
-                        label: 'Departemen',
-                        value: state.user.department?.name ?? '-',
-                        icon: Icons.business,
-                      ),
-                    ],
-                  );
-                }
-                return const SizedBox();
-              },
             ),
           ],
         ),
@@ -581,81 +716,6 @@ class _ProfilePageState extends State<ProfilePage> {
     );
   }
 
-  Widget _buildReadOnlyField({
-    required String label,
-    required String value,
-    required IconData icon,
-  }) {
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: Colors.grey,
-          size: 20,
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
-              ),
-              Text(
-                value,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: ElevatedButton(
-        onPressed: _showLogoutDialog,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.red,
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.logout),
-            SizedBox(width: 8),
-            Text('Keluar'),
-          ],
-        ),
-      ),
-    );
-  }
-
   void _saveProfile() async {
     if (_formKey.currentState!.validate()) {
       try {
@@ -673,6 +733,15 @@ class _ProfilePageState extends State<ProfilePage> {
           // Update AuthBloc state dengan data baru
           final currentAuthState = context.read<AuthBloc>().state;
           if (currentAuthState is AuthAuthenticated) {
+            // Cek apakah response mengembalikan data user
+            final responseUser = result['user'];
+            
+            // Debug: Print untuk melihat data
+            print('=== DEBUG SAVE PROFILE ===');
+            print('Response user: $responseUser');
+            print('Current profilePicture: ${currentAuthState.user.profilePicture}');
+            print('Current photoUrl: ${currentAuthState.user.photoUrl}');
+            
             final updatedUser = User(
               id: currentAuthState.user.id,
               name: _nameController.text,
@@ -682,11 +751,21 @@ class _ProfilePageState extends State<ProfilePage> {
               city: _cityController.text.isNotEmpty ? _cityController.text : null,
               postalCode: _postalCodeController.text.isNotEmpty ? _postalCodeController.text : null,
               status: currentAuthState.user.status,
-              profilePicture: currentAuthState.user.profilePicture,
+              // Gunakan foto dari response jika ada, kalau tidak preserve dari state lama
+              profilePicture: responseUser != null && responseUser['profile_picture'] != null 
+                  ? responseUser['profile_picture'] 
+                  : currentAuthState.user.profilePicture,
+              photoUrl: responseUser != null && responseUser['photo_url'] != null 
+                  ? responseUser['photo_url'] 
+                  : currentAuthState.user.photoUrl,
               role: currentAuthState.user.role,
               department: currentAuthState.user.department,
               token: currentAuthState.user.token,
             );
+            
+            print('Updated profilePicture: ${updatedUser.profilePicture}');
+            print('Updated photoUrl: ${updatedUser.photoUrl}');
+            print('=== END DEBUG ===');
             
             // Update AuthBloc state dengan user baru
             context.read<AuthBloc>().add(AuthUserUpdated(updatedUser));
