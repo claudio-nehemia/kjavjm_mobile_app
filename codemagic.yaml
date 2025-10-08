@@ -8,9 +8,6 @@ workflows:
       flutter: stable
       xcode: latest
       cocoapods: default
-      groups:
-        # Uncomment jika ada environment variables atau secrets
-        # - app_store_credentials
       vars:
         XCODE_WORKSPACE: "Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
