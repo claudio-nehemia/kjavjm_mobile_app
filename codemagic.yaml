@@ -1,113 +1,39 @@
 workflows:
-  # iOS Simulator Build Workflow
   ios-simulator-workflow:
     name: iOS Simulator Build
     max_build_duration: 60
     instance_type: mac_mini_m1
     environment:
+      groups:
+        # Tambahkan environment group jika ada
+      vars:
+        BASE_URL: "https://demo-kjavmj.prosesin.id/api"
+        XCODE_WORKSPACE: "Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
       flutter: stable
       xcode: latest
       cocoapods: default
-      vars:
-        XCODE_WORKSPACE: "Runner.xcworkspace"
-        XCODE_SCHEME: "Runner"
+    
     scripts:
       - name: Get Flutter packages
         script: |
-          flutter pub get
-
-      - name: Install CocoaPods dependencies
+          flutter packages pub get
+      
+      - name: Flutter analyze
         script: |
-          cd ios && pod install
-
+          flutter analyze
+      
       - name: Build iOS Simulator
         script: |
-          flutter build ios --simulator --debug
-          # Gunakan --release jika ingin build release
-          # flutter build ios --simulator --release
-
-      - name: Create Simulator Build Archive
-        script: |
-          cd build/ios/iphonesimulator
-          zip -r ios-simulator-app.zip Runner.app
-          
+          flutter build ios --simulator --release --dart-define=BASE_URL=$BASE_URL
+    
     artifacts:
-      - build/ios/iphonesimulator/ios-simulator-app.zip
-      - build/ios/iphonesimulator/*.app
+      - build/ios/iphonesimulator/**/*.app
+    
     publishing:
       email:
         recipients:
-          - your-email@example.com
-        notify:
-          success: true
-          failure: true
-
-  # iOS Device Build Workflow (Tanpa App Store)
-  ios-device-workflow:
-    name: iOS Device Build
-    max_build_duration: 60
-    instance_type: mac_mini_m1
-    environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
-      vars:
-        XCODE_WORKSPACE: "Runner.xcworkspace"
-        XCODE_SCHEME: "Runner"
-        BUNDLE_ID: "com.example.kjavjmmobileapp" # Ganti dengan bundle ID kamu
-    scripts:
-      - name: Get Flutter packages
-        script: |
-          flutter pub get
-
-      - name: Install CocoaPods dependencies
-        script: |
-          cd ios && pod install
-
-      - name: Build iOS IPA (no signing)
-        script: |
-          flutter build ipa --release --no-codesign
-
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - flutter_drive.log
-    publishing:
-      email:
-        recipients:
-          - your-email@example.com
-        notify:
-          success: true
-          failure: true
-
-  # Android Build Workflow (Bonus)
-  android-workflow:
-    name: Android Build
-    max_build_duration: 60
-    instance_type: mac_mini_m1
-    environment:
-      flutter: stable
-      java: 17
-    scripts:
-      - name: Get Flutter packages
-        script: |
-          flutter pub get
-
-      - name: Build Android APK
-        script: |
-          flutter build apk --release
-
-      - name: Build Android App Bundle
-        script: |
-          flutter build appbundle --release
-
-    artifacts:
-      - build/app/outputs/flutter-apk/*.apk
-      - build/app/outputs/bundle/release/*.aab
-    publishing:
-      email:
-        recipients:
-          - your-email@example.com
+          - claudio.nehemia83@gmail.com
         notify:
           success: true
           failure: true
