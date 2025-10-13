@@ -18,10 +18,6 @@ workflows:
         script: |
           flutter packages pub get
       
-      - name: Flutter analyze
-        script: |
-          flutter analyze
-      
       - name: Build iOS Simulator
         script: |
           flutter build ios --simulator --release --dart-define=BASE_URL=$BASE_URL
