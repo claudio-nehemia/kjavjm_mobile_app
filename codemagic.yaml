@@ -20,7 +20,7 @@ workflows:
       
       - name: Build iOS Simulator
         script: |
-          flutter build ios --simulator --release --dart-define=BASE_URL=$BASE_URL
+          flutter build ios --simulator --debug --dart-define=BASE_URL=$BASE_URL
     
     artifacts:
       - build/ios/iphonesimulator/**/*.app
