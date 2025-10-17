@@ -1,24 +1,53 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 
 class LocationService {
   /// Check if location services are enabled
   Future<bool> isLocationServiceEnabled() async {
+    if (kIsWeb) {
+      // For web, always return true (browser will handle permission)
+      return true;
+    }
     return await Geolocator.isLocationServiceEnabled();
   }
 
   /// Check location permission
   Future<LocationPermission> checkPermission() async {
+    if (kIsWeb) {
+      // For web, return whileInUse (browser handles permission differently)
+      return LocationPermission.whileInUse;
+    }
     return await Geolocator.checkPermission();
   }
 
   /// Request location permission
   Future<LocationPermission> requestPermission() async {
+    if (kIsWeb) {
+      // For web, return whileInUse
+      return LocationPermission.whileInUse;
+    }
     return await Geolocator.requestPermission();
   }
 
   /// Get current location with permission handling
   Future<Position?> getCurrentLocation() async {
+    if (kIsWeb) {
+      // For web, try to get position with simpler error handling
+      try {
+        return await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        ).timeout(
+          const Duration(seconds: 10),
+          onTimeout: () {
+            throw Exception('Location request timeout. Please enable location in your browser.');
+          },
+        );
+      } catch (e) {
+        throw Exception('Location not available on web: $e');
+      }
+    }
+    
     bool serviceEnabled;
     LocationPermission permission;
 

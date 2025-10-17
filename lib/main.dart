@@ -14,8 +14,14 @@ void main() async {
   // Initialize date formatting for Indonesian locale
   await initializeDateFormatting('id_ID', null);
   
-  // Load environment variables
-  await dotenv.load(fileName: "assets/.env");
+  // Load environment variables with error handling for web
+  try {
+    await dotenv.load(fileName: "assets/.env");
+  } catch (e) {
+    // For web, .env might not be available, use default values
+    debugPrint('Warning: Could not load .env file: $e');
+    debugPrint('Using default configuration for web');
+  }
   
   // Initialize dependency injection
   await di.init();
