@@ -25,6 +25,8 @@ dependencies:
   
   # File Operations
   file_picker: ^8.0.0+1
+  image_picker: ^1.0.7
+  image_picker_web: ^3.1.1
   
   # Environment Configuration
   flutter_dotenv: ^6.0.0

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:dio/dio.dart';
 
 class LocationService {
   /// Check if location services are enabled
@@ -80,6 +81,12 @@ class LocationService {
 
   /// Get address from coordinates
   Future<String> getAddressFromCoordinates(double latitude, double longitude) async {
+    if (kIsWeb) {
+      // Untuk web, gunakan Nominatim OpenStreetMap API (free reverse geocoding)
+      return await _getAddressFromApiWeb(latitude, longitude);
+    }
+    
+    // Untuk mobile, gunakan geocoding plugin
     try {
       List<Placemark> placemarks = await placemarkFromCoordinates(latitude, longitude);
       
@@ -116,6 +123,99 @@ class LocationService {
       print('Error getting address: $e');
       return 'Lat: $latitude, Long: $longitude';
     }
+  }
+
+  /// Get address from API for web platform
+  /// Uses Nominatim OpenStreetMap (free, no API key needed)
+  Future<String> _getAddressFromApiWeb(double latitude, double longitude) async {
+    try {
+      // Import Dio jika belum
+      final dio = await _getDioInstance();
+      
+      // Call Nominatim reverse geocoding API
+      final response = await dio.get(
+        'https://nominatim.openstreetmap.org/reverse',
+        queryParameters: {
+          'format': 'json',
+          'lat': latitude,
+          'lon': longitude,
+          'addressdetails': 1,
+        },
+        options: Options(
+          headers: {
+            'User-Agent': 'KJAVJM-Mobile-App', // Required by Nominatim
+          },
+        ),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data;
+        
+        // Build address from response
+        final address = data['address'];
+        List<String> addressParts = [];
+        
+        if (address != null) {
+          // Add road/street
+          if (address['road'] != null) {
+            addressParts.add(address['road']);
+          }
+          
+          // Add suburb/neighbourhood
+          if (address['suburb'] != null) {
+            addressParts.add(address['suburb']);
+          } else if (address['neighbourhood'] != null) {
+            addressParts.add(address['neighbourhood']);
+          }
+          
+          // Add city/town/village
+          if (address['city'] != null) {
+            addressParts.add(address['city']);
+          } else if (address['town'] != null) {
+            addressParts.add(address['town']);
+          } else if (address['village'] != null) {
+            addressParts.add(address['village']);
+          }
+          
+          // Add state/province
+          if (address['state'] != null) {
+            addressParts.add(address['state']);
+          }
+          
+          // Add country
+          if (address['country'] != null) {
+            addressParts.add(address['country']);
+          }
+          
+          if (addressParts.isNotEmpty) {
+            return addressParts.join(', ');
+          }
+        }
+        
+        // Fallback to display_name
+        if (data['display_name'] != null) {
+          return data['display_name'];
+        }
+      }
+      
+      // Fallback to coordinates
+      return 'Lat: ${latitude.toStringAsFixed(6)}, Long: ${longitude.toStringAsFixed(6)}';
+    } catch (e) {
+      print('❌ Error getting address from API: $e');
+      // Fallback to coordinates
+      return 'Lat: ${latitude.toStringAsFixed(6)}, Long: ${longitude.toStringAsFixed(6)}';
+    }
+  }
+
+  /// Get Dio instance for HTTP calls
+  Future<Dio> _getDioInstance() async {
+    // Simple Dio instance untuk reverse geocoding
+    return Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 10),
+      ),
+    );
   }
 
   /// Get location with address

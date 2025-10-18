@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../../../core/helpers/file_upload_helper.dart';
 import '../../domain/entities/attendance.dart';
 import '../bloc/attendance_bloc.dart';
 import '../bloc/attendance_state.dart';
@@ -1099,17 +1100,17 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                         ElevatedButton.icon(
                           onPressed: () async {
                             try {
-                              FilePickerResult? result = await FilePicker.platform.pickFiles(
-                                type: FileType.custom,
-                                allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
-                                allowMultiple: false,
-                              );
+                              // Pick document using helper (compatible untuk web dan mobile)
+                              final file = await FileUploadHelper.pickDocument();
                               
-                              if (result != null) {
-                                final file = result.files.first;
-                                if (file.size > 2 * 1024 * 1024) { // 2MB
+                              if (file != null) {
+                                // Validate file size (max 2MB)
+                                if (!FileUploadHelper.validateFileSize(file, 2)) {
                                   ScaffoldMessenger.of(dialogContext).showSnackBar(
-                                    const SnackBar(content: Text('Ukuran file maksimal 2MB')),
+                                    const SnackBar(
+                                      content: Text('Ukuran file maksimal 2MB'),
+                                      backgroundColor: Colors.red,
+                                    ),
                                   );
                                   return;
                                 }
@@ -1118,6 +1119,7 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                                 });
                               }
                             } catch (e) {
+                              print('❌ Error picking file: $e');
                               ScaffoldMessenger.of(dialogContext).showSnackBar(
                                 SnackBar(content: Text('Error memilih file: $e')),
                               );

@@ -1,10 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import '../../domain/usecases/login_usecase.dart';
 import '../../domain/usecases/logout_usecase.dart';
 import '../../domain/usecases/check_auth_status.dart';
 import '../../data/models/user_model.dart';
 import '../../../../core/usecases/usecase.dart';
 import '../../../../core/services/persistent_login_service.dart';
+import '../../../../core/utils/image_debug_helper.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -44,6 +46,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     await result.fold(
       (failure) async => emit(AuthError(message: failure.message)),
       (user) async {
+        // Debug: Check photo URL
+        debugPrint('👤 User logged in:');
+        debugPrint('   Name: ${user.name}');
+        debugPrint('   Photo URL from API: ${user.photoUrl}');
+        
+        // Check if photo URL is accessible
+        if (user.photoUrl != null && user.photoUrl!.isNotEmpty) {
+          await ImageDebugHelper.checkImageUrl(user.photoUrl);
+        } else {
+          debugPrint('   ⚠️ No photo URL provided by server');
+        }
+        
         // Save login data for persistence
         await persistentLoginService.saveLoginData(
           user: user.toJson(),

@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:cached_network_image/cached_network_image.dart';
 import '../constants/app_colors.dart';
 import '../config/web_config.dart';
-import 'web_image_widget.dart' if (dart.library.io) 'web_image_widget_stub.dart';
 
 class UserAvatar extends StatelessWidget {
   final String? photoUrl;
@@ -85,15 +84,52 @@ class UserAvatar extends StatelessWidget {
     );
   }
 
-  // 🌐 WEB - Pakai HTML native img tag untuk bypass CORS
+  // 🌐 WEB - Pakai approach berbeda
   Widget _buildWebImage(String url) {
-    print('🌐 Web - Using native HTML <img> tag for: $url');
+    // Add timestamp untuk bypass cache
+    final urlWithTimestamp = url.contains('?') 
+        ? '$url&t=${DateTime.now().millisecondsSinceEpoch}'
+        : '$url?t=${DateTime.now().millisecondsSinceEpoch}';
     
-    return WebImageWidget(
-      imageUrl: url,
-      size: size,
-      onError: () {
-        print('❌ Web - Failed to load image');
+    print('🌐 Web - Loading: $urlWithTimestamp');
+    
+    return Image.network(
+      urlWithTimestamp,
+      fit: BoxFit.cover,
+      // CORS headers
+      headers: const {
+        'Accept': 'image/webp,image/apng,image/*,*/*;q=0.8',
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) {
+          print('✅ Web - Image loaded successfully');
+          return child;
+        }
+        
+        final progress = loadingProgress.expectedTotalBytes != null
+            ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+            : null;
+            
+        print('⏳ Web - Loading: ${progress != null ? "${(progress * 100).toStringAsFixed(0)}%" : "..."}');
+        
+        return Container(
+          color: AppColors.lightGrey,
+          child: Center(
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 2,
+            ),
+          ),
+        );
+      },
+      errorBuilder: (context, error, stackTrace) {
+        print('❌ Web - Error loading image:');
+        print('   Error: $error');
+        print('   URL: $url');
+        print('   Stack: ${stackTrace?.toString().split('\n').take(3).join('\n')}');
+        
+        // Fallback ke initials
+        return _buildInitialsAvatar();
       },
     );
   }

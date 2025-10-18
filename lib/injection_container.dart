@@ -1,9 +1,9 @@
 import 'package:get_it/get_it.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dio/dio.dart';
-import 'package:dio/io.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'dart:io';
+import 'core/config/web_config.dart';
+import 'core/config/mobile_http_config.dart'
+    if (dart.library.html) 'core/config/mobile_http_config_web.dart';
 
 // Domain
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -60,34 +60,13 @@ Future<void> init() async {
 
   // Dio
   final dio = Dio();
-  dio.options.baseUrl = dotenv.env['BASE_URL'] ?? 'http://192.168.50.48:8000/api';
+  dio.options.baseUrl = WebConfig.apiBaseUrl; // Use WebConfig with fallback
   dio.options.connectTimeout = const Duration(seconds: 30);
   dio.options.receiveTimeout = const Duration(seconds: 30);
   dio.options.sendTimeout = const Duration(seconds: 30);
   
-  // Add SSL certificate handling for self-signed certificates
-  // IMPORTANT: In production, use proper SSL certificates
-  (dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
-    final client = HttpClient();
-    // Allow self-signed certificates in all modes
-    client.badCertificateCallback = (X509Certificate cert, String host, int port) {
-      print('🔒 SSL Certificate check for: $host:$port');
-      // Accept all certificates for development/testing
-      // In production, verify the certificate properly
-      return true;
-    };
-    // Disable certificate verification completely for development
-    return client;
-  };
-  
-  // Set onHttpClientCreate to ensure it's used
-  (dio.httpClientAdapter as IOHttpClientAdapter).onHttpClientCreate = (HttpClient client) {
-    client.badCertificateCallback = (X509Certificate cert, String host, int port) {
-      print('🔒 SSL Certificate check (onCreate) for: $host:$port');
-      return true;
-    };
-    return client;
-  };
+  // Configure mobile HTTP client with SSL handling (no-op on web)
+  configureMobileHttpClient(dio);
   
   // Add logging interceptor
   dio.interceptors.add(LogInterceptor(
@@ -131,7 +110,7 @@ Future<void> init() async {
   sl.registerLazySingleton<AuthRemoteDataSource>(
     () => AuthRemoteDataSourceImpl(
       dio: sl(),
-      baseUrl: dotenv.env['BASE_URL'] ?? 'http://192.168.50.48:8000/api',
+      baseUrl: WebConfig.apiBaseUrl, // Use WebConfig with fallback
     ),
   );
 

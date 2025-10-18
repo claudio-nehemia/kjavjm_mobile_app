@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
-import 'package:file_picker/file_picker.dart';
 import '../../../../shared/constants/app_constants.dart';
+import '../../../../core/utils/image_upload_helper.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -53,17 +53,25 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _pickAndUploadPhoto() async {
     try {
-      // Pick image file
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.image,
-        allowMultiple: false,
-      );
+      // Pick image using ImageUploadHelper - PASTI WORK DI WEB DAN MOBILE
+      final file = await ImageUploadHelper.pickImageFromGallery();
 
-      if (result == null || result.files.isEmpty) {
-        return;
+      if (file == null) {
+        return; // User cancelled
       }
 
-      final file = result.files.first;
+      // Validate file size (max 5MB)
+      final isValid = await ImageUploadHelper.validateFileSize(file, 5);
+      if (!isValid) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('File terlalu besar! Maksimal 5MB'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
 
       // Show loading
       if (!mounted) return;

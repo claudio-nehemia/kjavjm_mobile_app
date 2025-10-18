@@ -1,8 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../../core/error/exceptions.dart';
+import '../../../../core/config/web_config.dart';
+import '../../../../core/helpers/file_upload_helper.dart';
 import '../models/attendance_model.dart';
 import '../models/leave_approval_model.dart';
 import '../models/attendance_statistics_model.dart';
@@ -60,7 +61,7 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
     required this.sharedPreferences,
   });
 
-  String get baseUrl => dotenv.env['BASE_URL'] ?? 'http://192.168.22.146:8000/api';
+  String get baseUrl => WebConfig.apiBaseUrl; // Use WebConfig with fallback
 
   Future<String?> get authToken async {
     return sharedPreferences.getString('auth_token');
@@ -155,6 +156,12 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
     try {
       final token = await authToken;
       
+      // Debug file info
+      print('📄 Uploading document: ${document.name}, Size: ${FileUploadHelper.getFileSizeString(document.size)}');
+      
+      // Create multipart file (compatible untuk web dan mobile)
+      final multipartFile = await FileUploadHelper.platformFileToMultipart(document, fieldName: 'document');
+      
       // Create multipart form data
       FormData formData = FormData.fromMap({
         'status': 'leave',
@@ -163,10 +170,7 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
         'end_date': endDate,
         'total_days': totalDays,
         'type': type,
-        'document': await MultipartFile.fromFile(
-          document.path!,
-          filename: document.name,
-        ),
+        'document': multipartFile,
         if (latitude != null) 'latitude': latitude,
         if (longitude != null) 'longitude': longitude,
         if (location != null) 'location': location,

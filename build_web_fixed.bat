@@ -1,5 +1,5 @@
 @echo off
-REM Script untuk build Flutter Web di Windows
+REM Script untuk build Flutter Web di Windows dengan BASE_URL otomatis
 REM Usage: build_web.bat [mode] [renderer]
 
 setlocal enabledelayedexpansion
@@ -16,9 +16,8 @@ if "%MODE%"=="" set MODE=release
 set RENDERER=%2
 if "%RENDERER%"=="" set RENDERER=canvaskit
 
-REM Use BASE_URL which is recognized by WebConfig
-set BASE_URL=%BASE_URL%
-if "%BASE_URL%"=="" set BASE_URL=https://demo-kjavmj.prosesin.id/api
+REM Use BASE_URL from .env (hardcoded for now)
+set BASE_URL=https://demo-kjavmj.prosesin.id/api
 
 echo Build Configuration:
 echo   Mode: %MODE%
@@ -55,12 +54,18 @@ if "%MODE%"=="debug" (
 if errorlevel 1 goto :error
 
 echo.
+echo ================================================
 echo Build completed successfully!
+echo ================================================
 echo.
 echo To test locally:
 echo   cd build\web
-echo   python -m http.server 8000
-echo   Open: http://localhost:8000
+echo   python -m http.server 8080
+echo   Open: http://localhost:8080
+echo.
+echo Or use PHP:
+echo   cd build\web
+echo   php -S localhost:8080
 echo.
 echo To deploy:
 echo   Firebase:  firebase deploy --only hosting
@@ -71,7 +76,9 @@ goto :end
 
 :error
 echo.
+echo ================================================
 echo Build failed!
+echo ================================================
 exit /b 1
 
 :end
