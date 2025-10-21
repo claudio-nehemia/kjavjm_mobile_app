@@ -65,6 +65,15 @@ Future<void> init() async {
   dio.options.receiveTimeout = const Duration(seconds: 30);
   dio.options.sendTimeout = const Duration(seconds: 30);
   
+  // CORS-friendly headers for web
+  dio.options.headers = {
+    'Accept': 'application/json',
+    'Content-Type': 'application/json',
+  };
+  
+  // Set response type for web compatibility
+  dio.options.responseType = ResponseType.json;
+  
   // Configure mobile HTTP client with SSL handling (no-op on web)
   configureMobileHttpClient(dio);
   

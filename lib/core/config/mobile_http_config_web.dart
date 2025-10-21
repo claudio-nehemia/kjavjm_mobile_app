@@ -1,10 +1,14 @@
 // HTTP Client configuration for web platform
-// Stub implementation - no configuration needed for web
+// Configure Dio to use browser's fetch API with CORS support
 
 import 'package:dio/dio.dart';
+import 'package:dio/browser.dart';
 
 void configureMobileHttpClient(Dio dio) {
-  // Web doesn't need HttpClient configuration
-  // Browser handles all HTTP/HTTPS automatically
-  print('🌐 Web platform - using browser HTTP client');
+  // Use BrowserHttpClientAdapter for proper CORS handling
+  dio.httpClientAdapter = BrowserHttpClientAdapter(
+    withCredentials: false, // Set true jika butuh cookies/auth credentials
+  );
+  
+  print('🌐 Web platform - using browser HTTP client with CORS support');
 }
