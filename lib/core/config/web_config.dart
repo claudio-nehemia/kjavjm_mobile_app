@@ -9,7 +9,7 @@ class WebConfig {
   // static const String defaultApiBaseUrl = 'http://localhost:8000/api';
   static const String defaultApiBaseUrl = 'https://demo-kjavmj.prosesin.id/api';
   
-  static const String appName = 'KJAVJM HR App';
+  static const String appName = 'KJA VMJ HR App';
   static const String appVersion = '1.0.0';
 
   /// Get BASE_URL with fallback
