@@ -30,6 +30,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
   Future<Either<Failure, Attendance>> checkIn(
     String status, 
     String? documentation, {
+    String? lateReason,
     String? latitude,
     String? longitude,
     String? location,
@@ -38,6 +39,7 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
       final result = await remoteDataSource.checkIn(
         status, 
         documentation,
+        lateReason: lateReason,
         latitude: latitude,
         longitude: longitude,
         location: location,

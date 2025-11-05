@@ -37,3 +37,5 @@ class AuthUserUpdated extends AuthEvent {
 class CheckPersistentLogin extends AuthEvent {}
 
 class UpdateActivity extends AuthEvent {}
+
+class RefreshProfileRequested extends AuthEvent {}

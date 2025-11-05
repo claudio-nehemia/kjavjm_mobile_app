@@ -5,6 +5,7 @@ import '../../../../core/error/exceptions.dart';
 abstract class AuthRemoteDataSource {
   Future<UserModel> login(String email, String password);
   Future<void> logout();
+  Future<UserModel> getProfile();
 }
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
@@ -91,6 +92,48 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         throw NetworkException(message: 'Network connection error');
       } else {
         final errorMessage = e.response?.data?['message'] ?? e.message ?? 'Logout failed';
+        throw ServerException(message: errorMessage);
+      }
+    } catch (e) {
+      print('❌ Unexpected Error: $e');
+      throw ServerException(message: e.toString());
+    }
+  }
+
+  @override
+  Future<UserModel> getProfile() async {
+    try {
+      print('🚀 API Call: GET /profile');
+      
+      final response = await dio.get('/profile');
+      
+      print('✅ API Success: GET /profile');
+      print('📦 Response Data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        final data = response.data;
+        
+        // Response format: {message: "", user: {}, statistics: {}}
+        if (data['user'] != null) {
+          // Merge statistics into the response for UserModel parsing
+          return UserModel.fromJson(data);
+        } else {
+          print('❌ Invalid response format: $data');
+          throw ServerException(message: 'Invalid response format from server');
+        }
+      } else {
+        print('❌ API Error: Status ${response.statusCode}');
+        throw ServerException(message: 'Server error: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      print('❌ DioException: ${e.message}');
+      
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError) {
+        throw NetworkException(message: 'Network connection error');
+      } else {
+        final errorMessage = e.response?.data?['message'] ?? e.message ?? 'Failed to fetch profile';
         throw ServerException(message: errorMessage);
       }
     } catch (e) {

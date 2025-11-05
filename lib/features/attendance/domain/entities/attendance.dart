@@ -5,6 +5,7 @@ class Attendance extends Equatable {
   final int userId;
   final String tanggal;
   final String status;
+  final String? lateReason;
   final String? photoUrl;
   final String? checkIn;
   final String? checkOut;
@@ -18,6 +19,7 @@ class Attendance extends Equatable {
     required this.userId,
     required this.tanggal,
     required this.status,
+    this.lateReason,
     this.photoUrl,
     this.checkIn,
     this.checkOut,
@@ -33,6 +35,7 @@ class Attendance extends Equatable {
         userId,
         tanggal,
         status,
+        lateReason,
         photoUrl,
         checkIn,
         checkOut,

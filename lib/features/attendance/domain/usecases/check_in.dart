@@ -15,6 +15,7 @@ class CheckIn implements UseCase<Attendance, CheckInParams> {
     return await repository.checkIn(
       params.status, 
       params.documentation,
+      lateReason: params.lateReason,
       latitude: params.latitude,
       longitude: params.longitude,
       location: params.location,
@@ -25,6 +26,7 @@ class CheckIn implements UseCase<Attendance, CheckInParams> {
 class CheckInParams extends Equatable {
   final String status;
   final String? documentation;
+  final String? lateReason;
   final String? latitude;
   final String? longitude;
   final String? location;
@@ -32,11 +34,12 @@ class CheckInParams extends Equatable {
   const CheckInParams({
     required this.status,
     this.documentation,
+    this.lateReason,
     this.latitude,
     this.longitude,
     this.location,
   });
 
   @override
-  List<Object?> get props => [status, documentation, latitude, longitude, location];
+  List<Object?> get props => [status, documentation, lateReason, latitude, longitude, location];
 }

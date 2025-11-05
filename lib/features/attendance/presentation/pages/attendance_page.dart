@@ -302,7 +302,19 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
             color: _getStatusColor(attendance.status),
           ),
 
-        
+          // Late Reason (jika terlambat dan ada alasan)
+          if (attendance.status.toLowerCase() == 'late' && 
+              attendance.lateReason != null && 
+              attendance.lateReason!.isNotEmpty) ...[
+            const SizedBox(height: AppSizes.paddingSmall),
+            _buildInfoRow(
+              icon: Icons.comment,
+              label: 'Alasan Keterlambatan',
+              value: attendance.lateReason!,
+              color: AppColors.warning,
+              isLocation: true, // Pakai ini agar bisa show full text jika panjang
+            ),
+          ],
         ],
       ),
     );
@@ -915,11 +927,17 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
           ),
           ElevatedButton(
             onPressed: () {
+              if (controller.text.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Alasan keterlambatan harus diisi')),
+                );
+                return;
+              }
               Navigator.pop(dialogContext);
               context.read<AttendanceBloc>().add(
                 CheckInEvent(
                   status: status, 
-                  documentation: controller.text,
+                  lateReason: controller.text.trim(),
                   latitude: latitude,
                   longitude: longitude,
                   location: location,

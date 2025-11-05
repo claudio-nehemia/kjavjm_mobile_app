@@ -15,12 +15,22 @@ class UserModel extends User {
     super.photoUrl,
     super.role,
     super.department,
+    super.statistics,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+    // Debug: Print received JSON
+    print('=== UserModel.fromJson DEBUG ===');
+    print('Full JSON: $json');
+    print('Has user key: ${json.containsKey('user')}');
+    print('Has statistics key: ${json.containsKey('statistics')}');
+    
     // Check if the response has 'user' object (from login response)
     if (json.containsKey('user')) {
       final userJson = json['user'] as Map<String, dynamic>;
+      print('User data: $userJson');
+      print('Statistics in json: ${json['statistics']}');
+      
       return UserModel(
         id: userJson['id'] as int,
         name: userJson['name'] as String,
@@ -45,10 +55,22 @@ class UserModel extends User {
                 name: userJson['departement']['name'] as String,
               )
             : null,
+        statistics: json['statistics'] != null 
+            ? UserStatistics(
+                totalPresent: json['statistics']['total_present'] as int,
+                totalLeave: json['statistics']['total_leave'] as int,
+                totalAbsent: json['statistics']['total_absent'] as int,
+                month: json['statistics']['month'] as int,
+                year: json['statistics']['year'] as int,
+              )
+            : null,
       );
     }
     
     // Direct user object (for other endpoints)
+    print('Direct user object parsing');
+    print('Statistics: ${json['statistics']}');
+    
     return UserModel(
       id: json['id'] as int,
       name: json['name'] as String,
@@ -71,6 +93,15 @@ class UserModel extends User {
           ? Department(
               id: json['departement']['id'] as int,
               name: json['departement']['name'] as String,
+            )
+          : null,
+      statistics: json['statistics'] != null 
+          ? UserStatistics(
+              totalPresent: json['statistics']['total_present'] as int,
+              totalLeave: json['statistics']['total_leave'] as int,
+              totalAbsent: json['statistics']['total_absent'] as int,
+              month: json['statistics']['month'] as int,
+              year: json['statistics']['year'] as int,
             )
           : null,
     );

@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
+import 'package:dio/dio.dart';
 import '../../../../shared/constants/app_constants.dart';
 import '../../../../core/utils/image_upload_helper.dart';
 import '../../../auth/presentation/bloc/auth_bloc.dart';
 import '../../../auth/presentation/bloc/auth_event.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/user.dart';
+import '../../../auth/data/models/user_model.dart';
 import '../../data/services/profile_service.dart';
 import '../widgets/modern_profile_header.dart';
 import '../widgets/modern_stats_card.dart';
@@ -37,6 +39,28 @@ class _ProfilePageState extends State<ProfilePage> {
   void initState() {
     super.initState();
     _loadUserData();
+    _fetchProfileWithStatistics();
+  }
+
+  void _fetchProfileWithStatistics() async {
+    try {
+      print('📊 Fetching profile with statistics...');
+      final dio = GetIt.instance<Dio>();
+      final response = await dio.get('/profile');
+      
+      print('✅ Profile response: ${response.data}');
+      
+      if (response.data != null && response.data['user'] != null) {
+        final userModel = UserModel.fromJson(response.data);
+        
+        // Update AuthBloc dengan data baru (termasuk statistics)
+        if (mounted) {
+          context.read<AuthBloc>().add(AuthUserUpdated(userModel));
+        }
+      }
+    } catch (e) {
+      print('❌ Error fetching profile: $e');
+    }
   }
 
   void _loadUserData() {
@@ -105,6 +129,7 @@ class _ProfilePageState extends State<ProfilePage> {
           role: currentAuthState.user.role,
           department: currentAuthState.user.department,
           token: currentAuthState.user.token,
+          statistics: currentAuthState.user.statistics, // Preserve statistics
         );
         
         context.read<AuthBloc>().add(AuthUserUpdated(updatedUser));
@@ -182,6 +207,21 @@ class _ProfilePageState extends State<ProfilePage> {
               return const Center(child: CircularProgressIndicator());
             }
 
+            // Debug: Print statistics data
+            print('=== PROFILE PAGE DEBUG ===');
+            print('User: ${state.user.name}');
+            print('Statistics: ${state.user.statistics}');
+            if (state.user.statistics != null) {
+              print('Total Present: ${state.user.statistics!.totalPresent}');
+              print('Total Leave: ${state.user.statistics!.totalLeave}');
+              print('Total Absent: ${state.user.statistics!.totalAbsent}');
+              print('Month: ${state.user.statistics!.month}');
+              print('Year: ${state.user.statistics!.year}');
+            } else {
+              print('⚠️ Statistics is NULL!');
+            }
+            print('=== END DEBUG ===');
+
             return CustomScrollView(
               slivers: [
                 // Modern App Bar
@@ -227,19 +267,19 @@ class _ProfilePageState extends State<ProfilePage> {
                               StatItem(
                                 icon: Icons.check_circle_rounded,
                                 label: 'Hadir',
-                                value: 0,
+                                value: state.user.statistics?.totalPresent ?? 0,
                                 color: AppColors.success,
                               ),
                               StatItem(
                                 icon: Icons.event_busy_rounded,
                                 label: 'Izin',
-                                value: 0,
+                                value: state.user.statistics?.totalLeave ?? 0,
                                 color: AppColors.warning,
                               ),
                               StatItem(
                                 icon: Icons.cancel_rounded,
                                 label: 'Tidak Hadir',
-                                value: 0,
+                                value: state.user.statistics?.totalAbsent ?? 0,
                                 color: AppColors.danger,
                               ),
                             ],
@@ -769,6 +809,7 @@ class _ProfilePageState extends State<ProfilePage> {
               role: currentAuthState.user.role,
               department: currentAuthState.user.department,
               token: currentAuthState.user.token,
+              statistics: currentAuthState.user.statistics, // Preserve statistics
             );
             
             print('Updated profilePicture: ${updatedUser.profilePicture}');

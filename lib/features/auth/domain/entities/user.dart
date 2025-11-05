@@ -14,6 +14,7 @@ class User extends Equatable {
   final String? photoUrl;
   final Role? role;
   final Department? department;
+  final UserStatistics? statistics;
 
   const User({
     required this.id,
@@ -29,12 +30,13 @@ class User extends Equatable {
     this.photoUrl,
     this.role,
     this.department,
+    this.statistics,
   });
 
   @override
   List<Object?> get props => [
     id, name, email, token, phone, address, city, 
-    postalCode, status, profilePicture, photoUrl, role, department
+    postalCode, status, profilePicture, photoUrl, role, department, statistics
   ];
 
   Map<String, dynamic> toJson() {
@@ -51,6 +53,7 @@ class User extends Equatable {
       'profile_picture': profilePicture,
       'role': role?.toJson(),
       'department': department?.toJson(),
+      'statistics': statistics?.toJson(),
     };
   }
 }
@@ -91,6 +94,35 @@ class Department extends Equatable {
     return {
       'id': id,
       'name': name,
+    };
+  }
+}
+
+class UserStatistics extends Equatable {
+  final int totalPresent;
+  final int totalLeave;
+  final int totalAbsent;
+  final int month;
+  final int year;
+
+  const UserStatistics({
+    required this.totalPresent,
+    required this.totalLeave,
+    required this.totalAbsent,
+    required this.month,
+    required this.year,
+  });
+
+  @override
+  List<Object?> get props => [totalPresent, totalLeave, totalAbsent, month, year];
+
+  Map<String, dynamic> toJson() {
+    return {
+      'total_present': totalPresent,
+      'total_leave': totalLeave,
+      'total_absent': totalAbsent,
+      'month': month,
+      'year': year,
     };
   }
 }

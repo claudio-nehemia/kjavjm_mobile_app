@@ -11,6 +11,7 @@ class GetTodayAttendanceEvent extends AttendanceEvent {}
 
 class CheckInEvent extends AttendanceEvent {
   final String status;
+  final String? lateReason;
   final String? documentation;
   final String? latitude;
   final String? longitude;
@@ -18,6 +19,7 @@ class CheckInEvent extends AttendanceEvent {
 
   const CheckInEvent({
     required this.status,
+    this.lateReason,
     this.documentation,
     this.latitude,
     this.longitude,
@@ -25,7 +27,7 @@ class CheckInEvent extends AttendanceEvent {
   });
 
   @override
-  List<Object?> get props => [status, documentation, latitude, longitude, location];
+  List<Object?> get props => [status, lateReason, documentation, latitude, longitude, location];
 }
 
 class CheckInWithLeaveEvent extends AttendanceEvent {

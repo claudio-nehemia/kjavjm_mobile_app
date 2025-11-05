@@ -11,7 +11,7 @@ abstract class AttendanceRepository {
   Future<Either<Failure, Attendance>> checkIn(
     String status, 
     String? documentation,
-    {String? latitude, String? longitude, String? location}
+    {String? lateReason, String? latitude, String? longitude, String? location}
   );
   Future<Either<Failure, Attendance>> checkInWithLeave({
     required String leaveReason,

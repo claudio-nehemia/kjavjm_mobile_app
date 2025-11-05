@@ -15,7 +15,7 @@ abstract class AttendanceRemoteDataSource {
   Future<AttendanceModel> checkIn(
     String status, 
     String? documentation,
-    {String? latitude, String? longitude, String? location}
+    {String? lateReason, String? latitude, String? longitude, String? location}
   );
   Future<AttendanceModel> checkInWithLeave({
     required String leaveReason,
@@ -96,7 +96,7 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
   Future<AttendanceModel> checkIn(
     String status, 
     String? documentation,
-    {String? latitude, String? longitude, String? location}
+    {String? lateReason, String? latitude, String? longitude, String? location}
   ) async {
     try {
       final token = await authToken;
@@ -105,6 +105,7 @@ class AttendanceRemoteDataSourceImpl implements AttendanceRemoteDataSource {
         data: {
           'status': status,
           if (documentation != null) 'documentation': documentation,
+          if (lateReason != null) 'late_reason': lateReason,
           if (latitude != null) 'latitude': latitude,
           if (longitude != null) 'longitude': longitude,
           if (location != null) 'location': location,
