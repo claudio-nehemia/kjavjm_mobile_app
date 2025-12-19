@@ -7,7 +7,7 @@ class WebConfig {
   // DEVELOPMENT: Use localhost for testing
   // PRODUCTION: Use production URL
   // static const String defaultApiBaseUrl = 'http://localhost:8000/api';
-  static const String defaultApiBaseUrl = 'https://demo-kjavmj.prosesin.id/api';
+  static const String defaultApiBaseUrl = 'https://internal.kantorjasaakuntanvmjpapua.com/api';
   
   static const String appName = 'KJAVJM HR App';
   static const String appVersion = '1.0.0';
