@@ -7,6 +7,7 @@ import 'features/auth/presentation/bloc/auth_bloc.dart';
 import 'features/auth/presentation/pages/login_page.dart';
 import 'shared/widgets/main_scaffold.dart';
 import 'splash_page.dart';
+import 'features/geofencing/presentation/pages/geofence_test_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +17,13 @@ void main() async {
   
   // Load environment variables with error handling for web
   try {
-    await dotenv.load(fileName: "assets/.env");
+    // Prefer `assets/.env` but keep backward compatibility with older location.
+    try {
+      await dotenv.load(fileName: "assets/.env");
+    } catch (_) {
+      await dotenv.load(fileName: "assets/icons/.env");
+    }
+    debugPrint('✅ Loaded BASE_URL: ${dotenv.env['BASE_URL']}');
   } catch (e) {
     // For web, .env might not be available, use default values
     debugPrint('Warning: Could not load .env file: $e');
@@ -63,6 +70,7 @@ class MyApp extends StatelessWidget {
           create: (context) => di.sl<AuthBloc>(),
           child: const MainScaffold(),
         ),
+        '/geofence-test': (context) => const GeofenceTestPage(),
       },
     );
   }

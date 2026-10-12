@@ -74,3 +74,14 @@ class AppSizes {
   static const double radiusLarge = 12.0;
   static const double radiusXLarge = 16.0;
 }
+
+class GeofenceConfig {
+  static const String allowedAreaName = 'Mercu Buana Menteng';
+
+  /// Public coordinates reference for Kampus Menteng.
+  static const double centerLat = -6.1856;
+  static const double centerLng = 106.8364;
+
+  /// Adjust as needed.
+  static const double radiusMeters = 200;
+}

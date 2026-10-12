@@ -46,6 +46,12 @@ import 'features/profile/data/services/profile_service.dart';
 import 'features/leave/data/services/leave_service.dart';
 import 'features/overtime/data/services/overtime_service.dart';
 
+// Geofencing
+import 'core/services/geofencing_service.dart';
+import 'features/geofencing/data/repositories/geofencing_repository_impl.dart';
+import 'features/geofencing/domain/repositories/geofencing_repository.dart';
+import 'features/geofencing/presentation/bloc/geofencing_cubit.dart';
+
 // Core Services
 import 'core/services/auto_refresh_service.dart';
 import 'core/services/persistent_login_service.dart';
@@ -210,4 +216,11 @@ Future<void> init() async {
   sl.registerLazySingleton(() => AutoRefreshService());
   sl.registerLazySingleton(() => PersistentLoginService(sl()));
   sl.registerLazySingleton(() => LocationService());
+
+  // Geofencing (Android-only runtime guard lives in the service)
+  sl.registerLazySingleton(() => GeofencingService());
+  sl.registerLazySingleton<GeofencingRepository>(
+    () => GeofencingRepositoryImpl(service: sl()),
+  );
+  sl.registerFactory(() => GeofencingCubit(repository: sl()));
 }

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="800" viewBox="0 0 360 800">
+  <rect width="360" height="800" fill="#F5F5F5"/>
+  <rect x="0" y="0" width="360" height="56" fill="#1976D2"/>
+  <text x="48" y="36" font-family="Arial,sans-serif" font-size="16" font-weight="bold" fill="#FFFFFF">� Uji Geofence</text>
+
+  <rect x="16" y="72" width="328" height="96" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+  <text x="28" y="96" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#1976D2">Mercu Buana Menteng</text>
+  <text x="28" y="118" font-family="Arial,sans-serif" font-size="11" fill="#333">Pusat: -6.1856, 106.8364</text>
+  <text x="28" y="136" font-family="Arial,sans-serif" font-size="11" fill="#333">Radius: 200 m</text>
+  <text x="28" y="154" font-family="Arial,sans-serif" font-size="11" fill="#333">Metode: M1 (Haversine)</text>
+
+  <rect x="16" y="180" width="328" height="140" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+  <text x="28" y="204" font-family="Arial,sans-serif" font-size="11" fill="#666">Titik uji (ground truth)</text>
+  <rect x="28" y="212" width="304" height="36" rx="6" fill="#FAFAFA" stroke="#CCC"/>
+  <text x="40" y="236" font-family="Arial,sans-serif" font-size="12" fill="#333">T1  Dalam jelas �</text>
+  <text x="28" y="268" font-family="Arial,sans-serif" font-size="11" fill="#666">Metode algoritma</text>
+  <rect x="28" y="276" width="304" height="36" rx="6" fill="#FAFAFA" stroke="#CCC"/>
+  <text x="40" y="300" font-family="Arial,sans-serif" font-size="12" fill="#333">M1  Haversine �</text>
+
+  <rect x="16" y="332" width="328" height="100" rx="12" fill="#E8F5E9" stroke="#4CAF50" stroke-width="2"/>
+  <text x="28" y="360" font-family="Arial,sans-serif" font-size="18" font-weight="bold" fill="#2E7D32">INSIDE</text>
+  <text x="28" y="384" font-family="Arial,sans-serif" font-size="12" fill="#2E7D32"> Sesuai ground truth</text>
+  <text x="28" y="404" font-family="Arial,sans-serif" font-size="11" fill="#333">Jarak: 48 m</text>
+  <text x="28" y="420" font-family="Arial,sans-serif" font-size="10" fill="#666">Lat: -6.185150  Lng: 106.836400</text>
+
+  <rect x="16" y="444" width="328" height="120" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+  <text x="28" y="468" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#333">Titik Referensi T1T5</text>
+  <text x="28" y="492" font-family="Arial,sans-serif" font-size="11" fill="#333">T1 Dalam jelas</text>
+  <text x="28" y="512" font-family="Arial,sans-serif" font-size="11" fill="#333">T2 Tepi dalam</text>
+  <text x="28" y="532" font-family="Arial,sans-serif" font-size="11" fill="#333">T3 Tepi luar</text>
+
+  <rect x="16" y="576" width="328" height="100" rx="12" fill="#FFFFFF" stroke="#E0E0E0"/>
+  <text x="28" y="600" font-family="Arial,sans-serif" font-size="12" font-weight="bold" fill="#333">Log Sampel</text>
+  <text x="28" y="624" font-family="Arial,sans-serif" font-size="10" fill="#333">M1_T1_1  INSIDE  48m  </text>
+  <text x="28" y="644" font-family="Arial,sans-serif" font-size="10" fill="#333">M1_T1_2  OUTSIDE 220m  </text>
+
+  <rect x="100" y="700" width="160" height="48" rx="24" fill="#1976D2"/>
+  <text x="180" y="730" text-anchor="middle" font-family="Arial,sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">=� Ambil Lokasi</text>
+</svg>

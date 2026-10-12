@@ -1,0 +1,9 @@
+test_id,tanggal,metode,titik,ground_truth,prediksi,benar_Y_N,false_inside_Y_N,false_outside_Y_N,latitude,longitude,jarak_meter,latency_ms,app_state,skema,keterangan
+001,,M1,T1,INSIDE,,,,,,,,,A,fg,
+002,,M1,T2,INSIDE,,,,,,,,,A,fg,
+003,,M1,T3,OUTSIDE,,,,,,,,,A,fg,
+004,,M1,T4,OUTSIDE,,,,,,,,,A,fg,
+005,,M1,T5,INSIDE,,,,,,,,,A,fg,
+006,,M2,T2,INSIDE,,,,,,,,,C,fg,Kalman warmup 30 detik
+007,,M2,T3,OUTSIDE,,,,,,,,,C,fg,
+008,,M3,T1,INSIDE,,,,,,,,,B,bg,event enter/exit OS

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/helpers/file_upload_helper.dart';
 import '../../domain/entities/attendance.dart';
 import '../bloc/attendance_bloc.dart';
@@ -67,6 +68,61 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
       }
       return null;
     }
+  }
+
+  bool _isWithinAllowedArea(Map<String, String> locationData) {
+    final latStr = locationData['latitude'];
+    final lngStr = locationData['longitude'];
+    final lat = double.tryParse(latStr ?? '');
+    final lng = double.tryParse(lngStr ?? '');
+
+    if (lat == null || lng == null) {
+      return false;
+    }
+
+    final distance = Geolocator.distanceBetween(
+      lat,
+      lng,
+      GeofenceConfig.centerLat,
+      GeofenceConfig.centerLng,
+    );
+
+    return distance <= GeofenceConfig.radiusMeters;
+  }
+
+  void _showOutsideAreaMessage(Map<String, String> locationData) {
+    final lat = double.tryParse(locationData['latitude'] ?? '');
+    final lng = double.tryParse(locationData['longitude'] ?? '');
+    double? distance;
+
+    if (lat != null && lng != null) {
+      distance = Geolocator.distanceBetween(
+        lat,
+        lng,
+        GeofenceConfig.centerLat,
+        GeofenceConfig.centerLng,
+      );
+    }
+
+    final suffix = distance == null
+        ? ''
+        : ' (jarak ${(distance).toStringAsFixed(0)} m)';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Anda berada di luar area ${GeofenceConfig.allowedAreaName}.$suffix',
+        ),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  bool _ensureAllowedArea(Map<String, String> locationData) {
+    final ok = _isWithinAllowedArea(locationData);
+    if (!ok) _showOutsideAreaMessage(locationData);
+    return ok;
   }
 
   @override
@@ -619,6 +675,8 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                   }
                   return;
                 }
+
+                if (!_ensureAllowedArea(locationData)) return;
                 
                 if (isLate) {
                   _showDocumentationDialog(
@@ -671,15 +729,43 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(dialogContext);
-              context.read<AttendanceBloc>().add(CheckOutEvent());
-              // Show overtime notification if applicable
-              _showOvertimeNotification(context);
+              _performCheckOutWithGeofence(context);
             },
             child: const Text('Ya, Pulang'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _performCheckOutWithGeofence(BuildContext context) async {
+    // Show loading while getting location
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    final locationData = await _getLocation();
+
+    // Hide loading
+    if (mounted) Navigator.pop(context);
+
+    if (locationData == null) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Gagal mendapatkan lokasi. Silakan coba lagi.')),
+        );
+      }
+      return;
+    }
+
+    if (!_ensureAllowedArea(locationData)) return;
+
+    context.read<AttendanceBloc>().add(CheckOutEvent());
+    _showOvertimeNotification(context);
   }
 
   void _showOvertimeNotification(BuildContext context) {
@@ -1221,6 +1307,8 @@ class _AttendanceViewState extends State<AttendanceView> with AutoRefreshMixin {
                   }
                   return;
                 }
+
+                if (!_ensureAllowedArea(locationData)) return;
                 
                 // Format date strings for API
                 final startDateStr = '${startDate!.year}-${startDate!.month.toString().padLeft(2, '0')}-${startDate!.day.toString().padLeft(2, '0')}';

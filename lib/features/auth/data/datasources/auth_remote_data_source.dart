@@ -21,6 +21,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<UserModel> login(String email, String password) async {
     try {
       print('🚀 API Call: POST /auth/login');
+      print('📍 Base URL: $baseUrl');
+      print('📧 Email: $email');
+      print('🔒 Password: ${password.isNotEmpty ? '***' : '(empty)'}');
       
       final response = await dio.post(
         '/auth/login',
@@ -49,10 +52,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } on DioException catch (e) {
       print('❌ DioException: ${e.message}');
-      print('📋 Error Details: ${e.response?.data}');
+      print('📍 Full URL: ${e.requestOptions.baseUrl}${e.requestOptions.path}');
+      print('📋 Error Status Code: ${e.response?.statusCode}');
+      print('📋 Error Response: ${e.response?.data}');
       
       if (e.response?.statusCode == 401) {
-        throw ServerException(message: 'Invalid credentials');
+        // Extract error message from server response
+        final errorMessage = e.response?.data?['message'] ?? 'Email atau password salah';
+        throw ServerException(message: errorMessage);
       } else if (e.response?.statusCode == 422) {
         final errors = e.response?.data['errors'];
         String errorMessage = 'Validation error';
